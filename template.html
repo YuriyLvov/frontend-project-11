@@ -9,15 +9,18 @@
 
 <body>
   <div class="container py-4 px-3 mx-auto">
-    <form>
+    <form id="rss-form">
       <div class="mb-3">
-        <label for="input-rss" class="form-label">Ссылка RSS</label>
-        <input type="text" class="form-control" id="input-rss">
+        <label for="url-input" class="form-label">Ссылка RSS</label>
+        <input id="url-input" autofocus="" required="" name="url" aria-label="url" class="form-control w-100"
+          placeholder="ссылка RSS" autocomplete="off" type="text">
       </div>
-      <button type="submit" class="btn btn-primary">Добавить</button>
+      <button id="send-form-btn" class="btn btn-primary">Добавить</button>
     </form>
+    <p id="feedback" class="feedback m-0 position-absolute small"></p>
+    <div id="subscriptions"></div>
   </div>
-  <script src="./main.js"></script>
+  <!-- <script src="./main.js"></script> -->
 </body>
 
 </html>
