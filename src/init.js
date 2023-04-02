@@ -1,5 +1,26 @@
 import * as yup from 'yup';
 import onChange from 'on-change';
+import i18next from 'i18next';
+
+i18next.init({
+  lng: 'ru',
+  debug: true,
+  resources: {
+    ru: {
+      translation: {
+        urlNotValid: 'Ссылка должна быть валидным URL',
+        rssAdded: 'RSS успешно загружен',
+        urlAlredyExist: 'RSS уже существует',
+      },
+    },
+  },
+});
+
+yup.setLocale({
+  string: {
+    url: i18next.t('urlNotValid'),
+  },
+});
 
 const sendFormBtnElement = document.getElementById('send-form-btn');
 const urlInputElement = document.getElementById('url-input');
@@ -31,11 +52,11 @@ export default () => {
     urlValidator.validate(url).then(() => {
       const existedUrl = rssUrls.find((rssUrl) => rssUrl === url);
       if (existedUrl) {
-        throw new Error('RSS уже существует');
+        throw new Error(i18next.t('urlAlredyExist'));
       }
       rssUrls.push(url);
       feedbackElement.classList.add('text-success');
-      feedbackElement.textContent = 'RSS успешно загружен';
+      feedbackElement.textContent = i18next.t('rssAdded');
       urlInputElement.value = '';
 
       return new Promise((resolve) => {
@@ -51,11 +72,7 @@ export default () => {
       urlInputElement.classList.add('is-invalid');
       feedbackElement.classList.add('text-danger');
 
-      if (error.message === 'this must be a valid URL') {
-        feedbackElement.textContent = 'Ссылка должна быть валидным URL';
-      } else {
-        feedbackElement.textContent = error.message;
-      }
+      feedbackElement.textContent = error.message;
     });
   });
 };
