@@ -48,6 +48,38 @@ const watchedSubscriptionUrls = onChange(
   },
 );
 
+const requestRss = (url) => (
+  axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`).then((response) => {
+    if (response.status < 200 || response.status > 299) {
+      throw new Error(i18next.t('notValid'));
+    }
+
+    const parsedRss = rssParser(response.data.contents);
+
+    return parsedRss;
+  }).then((rssFeed) => {
+    if (!watchedFeeds[url]) {
+      watchedFeeds[url] = {
+        title: rssFeed.title,
+        description: rssFeed.description,
+      };
+    }
+
+    rssFeed.items.forEach((rssItem) => {
+      if (!watchedSubscriptionUrls[rssItem.link]) {
+        watchedSubscriptionUrls[rssItem.link] = rssItem;
+      }
+    });
+  })
+);
+
+const runWatcher = () => {
+  setTimeout(() => {
+    rssUrls.forEach((url) => requestRss(url));
+    runWatcher();
+  }, 5000);
+};
+
 export default () => {
   initLocalization();
 
@@ -67,30 +99,7 @@ export default () => {
       feedbackElement.textContent = i18next.t('rssAdded');
       urlInputElement.value = '';
 
-      const response = axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`);
-
-      return response;
-    }).then((response) => {
-      if (response.status < 200 || response.status > 299) {
-        throw new Error(i18next.t('notValid'));
-      }
-
-      const parsedRss = rssParser(response.data.contents);
-
-      return parsedRss;
-    }).then((rssFeed) => {
-      if (!watchedFeeds[rssFeed.link]) {
-        watchedFeeds[rssFeed.link] = {
-          title: rssFeed.title,
-          description: rssFeed.description,
-        };
-      }
-
-      rssFeed.items.forEach((rssItem) => {
-        if (!watchedSubscriptionUrls[rssItem.link]) {
-          watchedSubscriptionUrls[rssItem.link] = rssItem;
-        }
-      });
+      requestRss(url);
     }).catch((error) => {
       urlInputElement.classList.add('is-invalid');
       feedbackElement.classList.add('text-danger');
@@ -104,4 +113,6 @@ export default () => {
     feedbackElement.classList.remove('text-danger');
     feedbackElement.classList.remove('text-success');
   });
+
+  runWatcher();
 };

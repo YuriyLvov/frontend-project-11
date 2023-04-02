@@ -17,12 +17,10 @@ const rssParser = (contents) => {
 
   const feedTitle = xmlDom.querySelector('channel title');
   const feedDescription = xmlDom.querySelector('channel description');
-  const feedLink = xmlDom.querySelector('channel link');
 
   const feed = {
     title: feedTitle.textContent,
     description: feedDescription.textContent,
-    link: feedLink.textContent,
     items,
   };
 
