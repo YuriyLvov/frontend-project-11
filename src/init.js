@@ -5,6 +5,7 @@ import axios from 'axios';
 import {
   feedbackElement, sendFormBtnElement,
   subscriptionsElement, urlInputElement,
+  feedContainerElement,
 } from './elements.js';
 import initLocalization from './localization.js';
 import rssParser from './parser.js';
@@ -12,6 +13,24 @@ import rssParser from './parser.js';
 const urlValidator = yup.string().url().required();
 
 const rssUrls = [];
+
+const feeds = {};
+const watchedFeeds = onChange(
+  feeds,
+  (path, value) => {
+    const feedContainer = document.createElement('div');
+    const feedTitle = document.createElement('b');
+    const feedDescription = document.createElement('p');
+
+    feedTitle.textContent = value.title;
+    feedDescription.textContent = value.description;
+
+    feedContainer.appendChild(feedTitle);
+    feedContainer.appendChild(feedDescription);
+
+    feedContainerElement.appendChild(feedContainer);
+  },
+);
 
 const subscriptionUrls = {};
 const watchedSubscriptionUrls = onChange(
@@ -60,7 +79,14 @@ export default () => {
 
       return parsedRss;
     }).then((rssFeed) => {
-      rssFeed.forEach((rssItem) => {
+      if (!watchedFeeds[rssFeed.link]) {
+        watchedFeeds[rssFeed.link] = {
+          title: rssFeed.title,
+          description: rssFeed.description,
+        };
+      }
+
+      rssFeed.items.forEach((rssItem) => {
         if (!watchedSubscriptionUrls[rssItem.link]) {
           watchedSubscriptionUrls[rssItem.link] = rssItem;
         }

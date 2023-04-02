@@ -3,7 +3,7 @@ const domParser = new DOMParser();
 const rssParser = (contents) => {
   const xmlDom = domParser.parseFromString(contents, 'application/xml');
 
-  return Array.from(xmlDom.querySelectorAll('item')).map((item) => {
+  const items = Array.from(xmlDom.querySelectorAll('item')).map((item) => {
     const title = item.querySelector('title');
     const description = item.querySelector('description');
     const link = item.querySelector('link');
@@ -14,6 +14,19 @@ const rssParser = (contents) => {
       link: link.textContent,
     };
   });
+
+  const feedTitle = xmlDom.querySelector('channel title');
+  const feedDescription = xmlDom.querySelector('channel description');
+  const feedLink = xmlDom.querySelector('channel link');
+
+  const feed = {
+    title: feedTitle.textContent,
+    description: feedDescription.textContent,
+    link: feedLink.textContent,
+    items,
+  };
+
+  return feed;
 };
 
 export default rssParser;
