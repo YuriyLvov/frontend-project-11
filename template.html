@@ -18,11 +18,30 @@
       <button id="send-form-btn" class="btn btn-primary">Добавить</button>
     </form>
     <p id="feedback" class="feedback m-0 position-absolute small"></p>
-    <div id="subscriptions">
+    <div>
       <h2>Посты</h2>
+      <div id="subscriptions" class="container"></div>
     </div>
     <div id="feed">
       <h2>Фиды</h2>
+    </div>
+  </div>
+
+  <div id="previewModal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="previewModalTitle" class="modal-title">Modal title</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div id="previewModalDescription" class="modal-body">
+          <p>Modal body text goes here.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="previewModalReadAll" class="btn btn-primary">Читать полностью</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
     </div>
   </div>
 </body>

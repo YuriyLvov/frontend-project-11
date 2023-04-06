@@ -1,3 +1,4 @@
+import { Modal } from 'bootstrap';
 import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
@@ -5,13 +6,15 @@ import axios from 'axios';
 import {
   feedbackElement, sendFormBtnElement,
   subscriptionsElement, urlInputElement,
-  feedContainerElement,
+  feedContainerElement, previewModalElement,
+  previewModalTitleElement, previewModalDescriptionElement,
+  previewModalReadAllElement,
 } from './elements.js';
 import initLocalization from './localization.js';
 import rssParser from './parser.js';
 
 const urlValidator = yup.string().url().required();
-
+const modal = new Modal(previewModalElement);
 const rssUrls = [];
 
 const feeds = {};
@@ -32,18 +35,54 @@ const watchedFeeds = onChange(
   },
 );
 
+const openModal = (title, description, link) => {
+  previewModalTitleElement.textContent = title;
+  previewModalDescriptionElement.textContent = description;
+  previewModalReadAllElement.onclick = () => {
+    window.open(link);
+  };
+  modal.show();
+};
+
 const subscriptionUrls = {};
 const watchedSubscriptionUrls = onChange(
   subscriptionUrls,
   (path, value) => {
     const subscriptionContainer = document.createElement('div');
-    const subscriptionLink = document.createElement('a');
+    subscriptionContainer.classList.add('row', 'mb-3');
 
+    const subscriptionLink = document.createElement('a');
     subscriptionLink.href = value.link;
     subscriptionLink.target = '_blank';
     subscriptionLink.textContent = value.title;
+    subscriptionLink.classList.add('fw-bold');
 
-    subscriptionContainer.appendChild(subscriptionLink);
+    subscriptionLink.addEventListener('click', () => {
+      subscriptionLink.classList.add('fw-normal');
+      subscriptionLink.classList.remove('fw-bold');
+    });
+
+    const subscriptionLinkCol = document.createElement('div');
+    subscriptionLinkCol.classList.add('col');
+    subscriptionLinkCol.appendChild(subscriptionLink);
+
+    const subscriptionButton = document.createElement('button');
+    subscriptionButton.textContent = 'Просмотр';
+    subscriptionButton.classList.add('btn', 'btn-primary');
+
+    subscriptionButton.addEventListener('click', () => {
+      subscriptionLink.classList.add('fw-normal');
+      subscriptionLink.classList.remove('fw-bold');
+
+      openModal(value.title, value.description, value.link);
+    });
+
+    const subscriptionButtonCol = document.createElement('div');
+    subscriptionButtonCol.classList.add('col');
+    subscriptionButtonCol.appendChild(subscriptionButton);
+
+    subscriptionContainer.appendChild(subscriptionLinkCol);
+    subscriptionContainer.appendChild(subscriptionButtonCol);
     subscriptionsElement.appendChild(subscriptionContainer);
   },
 );
