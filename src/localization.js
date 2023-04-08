@@ -12,6 +12,9 @@ const initLocalization = () => {
           rssAdded: 'RSS успешно загружен',
           urlAlredyExist: 'RSS уже существует',
           notValid: 'Ресурс не содержит валидный RSS',
+          viewPost: 'Просмотр',
+          required: 'Не должно быть пустым',
+          networkError: 'Ошибка сети',
         },
       },
     },
@@ -20,6 +23,9 @@ const initLocalization = () => {
   yup.setLocale({
     string: {
       url: i18next.t('urlNotValid'),
+    },
+    mixed: {
+      required: i18next.t('required'),
     },
   });
 };

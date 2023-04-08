@@ -8,12 +8,11 @@ import {
   subscriptionsElement, urlInputElement,
   feedContainerElement, previewModalElement,
   previewModalTitleElement, previewModalDescriptionElement,
-  previewModalReadAllElement,
+  previewModalReadAllElement, outputElement,
 } from './elements.js';
 import initLocalization from './localization.js';
 import rssParser from './parser.js';
 
-const urlValidator = yup.string().url().required();
 const modal = new Modal(previewModalElement);
 const rssUrls = [];
 
@@ -67,7 +66,7 @@ const watchedSubscriptionUrls = onChange(
     subscriptionLinkCol.appendChild(subscriptionLink);
 
     const subscriptionButton = document.createElement('button');
-    subscriptionButton.textContent = 'Просмотр';
+    subscriptionButton.textContent = i18next.t('viewPost');
     subscriptionButton.classList.add('btn', 'btn-primary');
 
     subscriptionButton.addEventListener('click', () => {
@@ -89,14 +88,11 @@ const watchedSubscriptionUrls = onChange(
 
 const requestRss = (url) => (
   axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`).then((response) => {
-    if (response.status < 200 || response.status > 299) {
-      throw new Error(i18next.t('notValid'));
-    }
-
     const parsedRss = rssParser(response.data.contents);
 
     return parsedRss;
   }).then((rssFeed) => {
+    outputElement.classList.remove('d-none');
     if (!watchedFeeds[url]) {
       watchedFeeds[url] = {
         title: rssFeed.title,
@@ -109,6 +105,12 @@ const requestRss = (url) => (
         watchedSubscriptionUrls[rssItem.link] = rssItem;
       }
     });
+  }).catch((error) => {
+    if (error?.response?.status < 200 || error?.response?.status > 299) {
+      throw new Error(i18next.t('notValid'));
+    }
+
+    throw new Error(i18next.t('networkError'));
   })
 );
 
@@ -121,6 +123,8 @@ const runWatcher = () => {
 
 export default () => {
   initLocalization();
+
+  const urlValidator = yup.string().url().required();
 
   sendFormBtnElement.addEventListener('click', (event) => {
     event.preventDefault();
@@ -138,7 +142,7 @@ export default () => {
       feedbackElement.textContent = i18next.t('rssAdded');
       urlInputElement.value = '';
 
-      requestRss(url);
+      return requestRss(url);
     }).catch((error) => {
       urlInputElement.classList.add('is-invalid');
       feedbackElement.classList.add('text-danger');

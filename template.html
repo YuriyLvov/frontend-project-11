@@ -4,26 +4,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bootstrap w/ Webpack</title>
+  <title>RSS агрегатор</title>
 </head>
 
 <body>
   <div class="container py-4 px-3 mx-auto">
-    <form id="rss-form">
-      <div class="mb-3">
-        <label for="url-input" class="form-label">Ссылка RSS</label>
-        <input id="url-input" autofocus="" required="" name="url" aria-label="url" class="form-control w-100"
-          placeholder="ссылка RSS" autocomplete="off" type="text">
-      </div>
-      <button id="send-form-btn" class="btn btn-primary">Добавить</button>
-    </form>
-    <p id="feedback" class="feedback m-0 position-absolute small"></p>
-    <div>
-      <h2>Посты</h2>
-      <div id="subscriptions" class="container"></div>
+    <div class="row">
+      <h1>RSS агрегатор</h1>
+      <h3>Начните читать RSS сегодня! Это легко, это красиво.</h3>
+      <form id="rss-form">
+        <div class="mb-3">
+          <label for="url-input" class="form-label">Ссылка RSS</label>
+          <input id="url-input" autofocus required name="url" aria-label="url" class="form-control w-100"
+            placeholder="ссылка RSS" autocomplete="off" type="text">
+        </div>
+        <button id="send-form-btn" class="btn btn-primary">Добавить</button>
+      </form>
+      <p class="small">Пример: https://ru.hexlet.io/lessons.rss</p>
+      <p id="feedback" class="feedback small"></p>
     </div>
-    <div id="feed">
-      <h2>Фиды</h2>
+  </div>
+
+  <div id="output" class="container d-none">
+    <div class="row">
+      <div class="col-8">
+        <h2>Посты</h2>
+        <div id="subscriptions" class="container"></div>
+      </div>
+      <div class="col-4">
+        <h2>Фиды</h2>
+        <div id="feed" class="container"></div>
+      </div>
     </div>
   </div>
 
