@@ -1,3 +1,4 @@
+export const rssFormElement = document.getElementById('rss-form');
 export const sendFormBtnElement = document.getElementById('send-form-btn');
 export const urlInputElement = document.getElementById('url-input');
 export const feedbackElement = document.getElementById('feedback');

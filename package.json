@@ -6,7 +6,8 @@
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "webpack build",
-    "test": "jest --colors"
+    "test": "jest --colors",
+    "test-e2e": "npx playwright test"
   },
   "repository": {
     "type": "git",

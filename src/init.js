@@ -4,7 +4,7 @@ import onChange from 'on-change';
 import i18next from 'i18next';
 import axios from 'axios';
 import {
-  feedbackElement, sendFormBtnElement,
+  feedbackElement, rssFormElement,
   subscriptionsElement, urlInputElement,
   feedContainerElement, previewModalElement,
   previewModalTitleElement, previewModalDescriptionElement,
@@ -126,7 +126,7 @@ export default () => {
 
   const urlValidator = yup.string().url().required();
 
-  sendFormBtnElement.addEventListener('click', (event) => {
+  rssFormElement.addEventListener('submit', (event) => {
     event.preventDefault();
     const url = urlInputElement.value;
 
