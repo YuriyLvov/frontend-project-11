@@ -87,7 +87,7 @@ const watchedSubscriptionUrls = onChange(
 );
 
 const requestRss = (url) => (
-  axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`).then((response) => {
+  axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`).then((response) => {
     const parsedRss = rssParser(response.data.contents);
 
     return parsedRss;
