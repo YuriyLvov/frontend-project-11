@@ -106,6 +106,10 @@ const requestRss = (url) => (
       }
     });
   }).catch((error) => {
+    if (error.message === i18next.t('notValid')) {
+      throw error;
+    }
+
     if (error?.response?.status < 200 || error?.response?.status > 299) {
       throw new Error(i18next.t('notValid'));
     }
@@ -136,13 +140,13 @@ export default () => {
         throw new Error(i18next.t('urlAlredyExist'));
       }
 
+      return requestRss(url);
+    }).then(() => {
       rssUrls.push(url);
 
       feedbackElement.classList.add('text-success');
       feedbackElement.textContent = i18next.t('rssAdded');
       urlInputElement.value = '';
-
-      return requestRss(url);
     }).catch((error) => {
       urlInputElement.classList.add('is-invalid');
       feedbackElement.classList.add('text-danger');
