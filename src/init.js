@@ -48,7 +48,7 @@ const watchedSubscriptionUrls = onChange(
   subscriptionUrls,
   (path, value) => {
     const subscriptionContainer = document.createElement('div');
-    subscriptionContainer.classList.add('row', 'mb-3');
+    subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
 
     const subscriptionLink = document.createElement('a');
     subscriptionLink.href = value.link;
@@ -61,10 +61,6 @@ const watchedSubscriptionUrls = onChange(
       subscriptionLink.classList.remove('fw-bold');
     });
 
-    const subscriptionLinkCol = document.createElement('div');
-    subscriptionLinkCol.classList.add('col');
-    subscriptionLinkCol.appendChild(subscriptionLink);
-
     const subscriptionButton = document.createElement('button');
     subscriptionButton.textContent = i18next.t('viewPost');
     subscriptionButton.classList.add('btn', 'btn-primary');
@@ -76,12 +72,8 @@ const watchedSubscriptionUrls = onChange(
       openModal(value.title, value.description, value.link);
     });
 
-    const subscriptionButtonCol = document.createElement('div');
-    subscriptionButtonCol.classList.add('col');
-    subscriptionButtonCol.appendChild(subscriptionButton);
-
-    subscriptionContainer.appendChild(subscriptionLinkCol);
-    subscriptionContainer.appendChild(subscriptionButtonCol);
+    subscriptionContainer.appendChild(subscriptionLink);
+    subscriptionContainer.appendChild(subscriptionButton);
     subscriptionsElement.appendChild(subscriptionContainer);
   },
 );
