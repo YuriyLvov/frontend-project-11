@@ -144,3 +144,54 @@ test('show error message if input is empty', async ({ page }) => {
 
   await expect(errorMessage).toBeVisible();
 });
+
+test('show error message if network error', async ({ page }) => {
+  await page.route('https://allorigins.hexlet.app/get?disableCache=true&url=https%3A%2F%2Fru.hexlet.io%2Flessons.rss', (route) => {
+    route.abort();
+  });
+
+  const inputUrl = await page.locator('#url-input');
+  const sendFormBtn = await page.locator('#send-form-btn');
+
+  inputUrl.fill('https://ru.hexlet.io/lessons.rss');
+
+  await sendFormBtn.click();
+
+  const errorMessage = await page.getByText(i18next.t('networkError'));
+
+  await expect(errorMessage).toBeVisible();
+});
+
+test('show error message if bad response', async ({ page }) => {
+  await page.route('https://allorigins.hexlet.app/get?disableCache=true&url=https%3A%2F%2Fru.hexlet.io%2Flessons.rss', async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'text/plain',
+      body: 'Not Found!',
+    });
+  });
+
+  const inputUrl = await page.locator('#url-input');
+  const sendFormBtn = await page.locator('#send-form-btn');
+
+  inputUrl.fill('https://ru.hexlet.io/lessons.rss');
+
+  await sendFormBtn.click();
+
+  const errorMessage = await page.getByText(i18next.t('notValid'));
+
+  await expect(errorMessage).toBeVisible();
+});
+
+test('show error message if response does not include rss', async ({ page }) => {
+  const inputUrl = await page.locator('#url-input');
+  const sendFormBtn = await page.locator('#send-form-btn');
+
+  inputUrl.fill('https://google.com');
+
+  await sendFormBtn.click();
+
+  const errorMessage = await page.getByText(i18next.t('notValid'));
+
+  await expect(errorMessage).toBeVisible();
+});

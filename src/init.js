@@ -9,6 +9,7 @@ import {
   feedContainerElement, previewModalElement,
   previewModalTitleElement, previewModalDescriptionElement,
   previewModalReadAllElement, outputElement,
+  sendFormBtnElement,
 } from './elements.js';
 import initLocalization from './localization.js';
 import rssParser from './parser.js';
@@ -124,6 +125,8 @@ export default () => {
 
   rssFormElement.addEventListener('submit', (event) => {
     event.preventDefault();
+    sendFormBtnElement.disabled = true;
+
     const url = urlInputElement.value;
 
     urlValidator.validate(url).then(() => {
@@ -144,7 +147,10 @@ export default () => {
       feedbackElement.classList.add('text-danger');
 
       feedbackElement.textContent = error.message;
-    });
+    })
+      .finally(() => {
+        sendFormBtnElement.disabled = false;
+      });
   });
 
   urlInputElement.addEventListener('input', () => {
