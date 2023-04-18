@@ -79,8 +79,15 @@ const watchedSubscriptionUrls = onChange(
   },
 );
 
-const requestRss = (url) => (
-  axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`).then((response) => {
+const PROXY_BASE_URL = 'https://allorigins.hexlet.app';
+const proxyUrl = new URL('get', PROXY_BASE_URL);
+
+proxyUrl.searchParams.set('disableCache', 'true');
+
+const requestRss = (url) => {
+  proxyUrl.searchParams.set('url', url);
+
+  return axios.get(proxyUrl).then((response) => {
     const parsedRss = rssParser(response.data.contents);
 
     return parsedRss;
@@ -108,8 +115,8 @@ const requestRss = (url) => (
     }
 
     throw new Error(i18next.t('networkError'));
-  })
-);
+  });
+};
 
 const WATCHER_DELAY = 5000;
 
