@@ -111,11 +111,13 @@ const requestRss = (url) => (
   })
 );
 
+const WATCHER_DELAY = 5000;
+
 const runWatcher = () => {
   setTimeout(() => {
     rssUrls.forEach((url) => requestRss(url));
     runWatcher();
-  }, 5000);
+  }, WATCHER_DELAY);
 };
 
 export default () => {
