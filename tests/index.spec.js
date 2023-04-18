@@ -157,7 +157,7 @@ test('show error message if network error', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const errorMessage = await page.getByText(i18next.t('networkError'));
+  const errorMessage = page.getByText(i18next.t('networkError'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -178,7 +178,7 @@ test('show error message if bad response', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const errorMessage = await page.getByText(i18next.t('notValid'));
+  const errorMessage = page.getByText(i18next.t('notValid'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -191,7 +191,7 @@ test('show error message if response does not include rss', async ({ page }) => 
 
   await sendFormBtn.click();
 
-  const errorMessage = await page.getByText(i18next.t('notValid'));
+  const errorMessage = page.getByText(i18next.t('notValid'));
 
   await expect(errorMessage).toBeVisible();
 });
