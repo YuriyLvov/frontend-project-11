@@ -6,6 +6,11 @@ const rssParser = (contents) => {
   try {
     const xmlDom = domParser.parseFromString(contents, 'application/xml');
 
+    if (xmlDom.querySelector('parsererror')) {
+      console.log(xmlDom);
+      throw new Error('Error parsing XML');
+    }
+
     const items = Array.from(xmlDom.querySelectorAll('item')).map((item) => {
       const title = item.querySelector('title');
       const description = item.querySelector('description');
