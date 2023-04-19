@@ -44,7 +44,11 @@ export default () => {
     previewModalTitleElement.textContent = title;
     previewModalDescriptionElement.textContent = description;
     previewModalReadAllElement.onclick = () => {
-      window.open(link);
+      const anchor = document.createElement('a');
+      anchor.href = link;
+      anchor.target = '_blank';
+
+      anchor.click();
     };
     modal.show();
   };
