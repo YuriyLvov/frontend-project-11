@@ -1,13 +1,15 @@
-export const rssFormElement = document.getElementById('rss-form');
-export const sendFormBtnElement = document.getElementById('send-form-btn');
-export const urlInputElement = document.getElementById('url-input');
-export const feedbackElement = document.getElementById('feedback');
+const getElements = () => ({
+  rssFormElement: document.getElementById('rss-form'),
+  sendFormBtnElement: document.getElementById('send-form-btn'),
+  urlInputElement: document.getElementById('url-input'),
+  feedbackElement: document.getElementById('feedback'),
+  outputElement: document.getElementById('output'),
+  subscriptionsElement: document.getElementById('subscriptions'),
+  feedContainerElement: document.getElementById('feed'),
+  previewModalElement: document.getElementById('previewModal'),
+  previewModalTitleElement: document.getElementById('previewModalTitle'),
+  previewModalDescriptionElement: document.getElementById('previewModalDescription'),
+  previewModalReadAllElement: document.getElementById('previewModalReadAll'),
+});
 
-export const outputElement = document.getElementById('output');
-export const subscriptionsElement = document.getElementById('subscriptions');
-export const feedContainerElement = document.getElementById('feed');
-
-export const previewModalElement = document.getElementById('previewModal');
-export const previewModalTitleElement = document.getElementById('previewModalTitle');
-export const previewModalDescriptionElement = document.getElementById('previewModalDescription');
-export const previewModalReadAllElement = document.getElementById('previewModalReadAll');
+export default getElements;
