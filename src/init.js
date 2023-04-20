@@ -4,8 +4,8 @@ import onChange from 'on-change';
 import i18next from 'i18next';
 import axios from 'axios';
 import getElements from './elements.js';
-import initLocalization from './localization.js';
 import rssParser from './parser.js';
+import { initLocalization } from './locales/index.js';
 
 export default () => {
   initLocalization();

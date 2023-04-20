@@ -1,7 +1,7 @@
 /* eslint testing-library/prefer-screen-queries: 0 */
 import { test, expect } from '@playwright/test';
 import i18next from 'i18next';
-import initLocalization from '../src/localization.js';
+import { initLocalization } from '../src/locales/index.js';
 
 test.beforeAll(() => {
   initLocalization();
