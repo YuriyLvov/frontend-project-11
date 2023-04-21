@@ -1,4 +1,5 @@
 import { Modal } from 'bootstrap';
+import lodash from 'lodash';
 import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
@@ -6,6 +7,46 @@ import axios from 'axios';
 import getElements from './elements.js';
 import rssParser from './parser.js';
 import { initLocalization } from './locales/index.js';
+import { PROXY_BASE_URL, WATCHER_DELAY } from './constansts.js';
+
+const requestRss = (url, feedState, postState) => {
+  const proxyUrl = new URL('get', PROXY_BASE_URL);
+  proxyUrl.searchParams.set('disableCache', 'true');
+  proxyUrl.searchParams.set('url', url);
+
+  return axios.get(proxyUrl).then((response) => {
+    const parsedRss = rssParser(response.data.contents);
+
+    return parsedRss;
+  }).then((rssFeed) => {
+    if (lodash.isPlainObject(feedState) && !feedState[url]) {
+      Object.assign(feedState, {
+        [url]: {
+          title: rssFeed.title,
+          description: rssFeed.description,
+        },
+      });
+    }
+
+    rssFeed.items.forEach((rssItem) => {
+      if (lodash.isPlainObject(postState) && !postState[rssItem.link]) {
+        Object.assign(postState, {
+          [rssItem.link]: rssItem,
+        });
+      }
+    });
+  }).catch((error) => {
+    if (error.message === i18next.t('notValid')) {
+      throw error;
+    }
+
+    if (error?.response?.status < 200 || error?.response?.status > 299) {
+      throw new Error(i18next.t('notValid'));
+    }
+
+    throw new Error(i18next.t('networkError'));
+  });
+};
 
 export default () => {
   initLocalization();
@@ -88,50 +129,9 @@ export default () => {
     },
   );
 
-  const PROXY_BASE_URL = 'https://allorigins.hexlet.app';
-  const proxyUrl = new URL('get', PROXY_BASE_URL);
-
-  proxyUrl.searchParams.set('disableCache', 'true');
-
-  const requestRss = (url) => {
-    proxyUrl.searchParams.set('url', url);
-
-    return axios.get(proxyUrl).then((response) => {
-      const parsedRss = rssParser(response.data.contents);
-
-      return parsedRss;
-    }).then((rssFeed) => {
-      outputElement.classList.remove('d-none');
-      if (!watchedFeeds[url]) {
-        watchedFeeds[url] = {
-          title: rssFeed.title,
-          description: rssFeed.description,
-        };
-      }
-
-      rssFeed.items.forEach((rssItem) => {
-        if (!watchedSubscriptionUrls[rssItem.link]) {
-          watchedSubscriptionUrls[rssItem.link] = rssItem;
-        }
-      });
-    }).catch((error) => {
-      if (error.message === i18next.t('notValid')) {
-        throw error;
-      }
-
-      if (error?.response?.status < 200 || error?.response?.status > 299) {
-        throw new Error(i18next.t('notValid'));
-      }
-
-      throw new Error(i18next.t('networkError'));
-    });
-  };
-
-  const WATCHER_DELAY = 5000;
-
   const runWatcher = () => {
     setTimeout(() => {
-      rssUrls.forEach((url) => requestRss(url));
+      rssUrls.forEach((url) => requestRss(url, watchedFeeds, watchedSubscriptionUrls));
       runWatcher();
     }, WATCHER_DELAY);
   };
@@ -150,10 +150,11 @@ export default () => {
         throw new Error(i18next.t('urlAlredyExist'));
       }
 
-      return requestRss(url);
+      return requestRss(url, watchedFeeds, watchedSubscriptionUrls);
     }).then(() => {
       rssUrls.push(url);
 
+      outputElement.classList.remove('d-none');
       feedbackElement.classList.add('text-success');
       feedbackElement.textContent = i18next.t('rssAdded');
       urlInputElement.value = '';
