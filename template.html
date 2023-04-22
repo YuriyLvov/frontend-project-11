@@ -15,13 +15,14 @@
       <form id="rss-form">
         <div class="mb-3">
           <label for="url-input" class="form-label">Ссылка RSS</label>
-          <input id="url-input" autofocus name="url" aria-label="url" class="form-control w-100"
+          <input id="url-input" autofocus name="url" aria-label="url" class="form-control w-100 js_url-input"
             placeholder="ссылка RSS" autocomplete="off" type="text">
         </div>
-        <button id="send-form-btn" class="btn btn-primary" type="submit">Добавить</button>
+        <button class="btn btn-primary js_send-form-btn" type="submit">Добавить</button>
+        
+        <p class="small">Пример: https://ru.hexlet.io/lessons.rss</p>
+        <p class="feedback small js_feedback"></p>
       </form>
-      <p class="small">Пример: https://ru.hexlet.io/lessons.rss</p>
-      <p id="feedback" class="feedback small"></p>
     </div>
   </div>
 
@@ -29,27 +30,27 @@
     <div class="row">
       <div class="col-8">
         <h2>Посты</h2>
-        <div id="subscriptions" class="container"></div>
+        <div class="container js_subscriptions"></div>
       </div>
       <div class="col-4">
         <h2>Фиды</h2>
-        <div id="feed" class="container"></div>
+        <div class="container js_feed"></div>
       </div>
     </div>
   </div>
 
-  <div id="previewModal" class="modal" tabindex="-1">
+  <div id="preview-modal" class="modal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 id="previewModalTitle" class="modal-title">Modal title</h5>
+          <h5 class="modal-title js_preview-modal-title">Modal title</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div id="previewModalDescription" class="modal-body">
+        <div class="modal-body js_preview-modal-description">
           <p>Modal body text goes here.</p>
         </div>
         <div class="modal-footer">
-          <button type="button" id="previewModalReadAll" class="btn btn-primary">Читать полностью</button>
+          <button type="button" class="btn btn-primary js_preview-modal-read-all">Читать полностью</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
         </div>
       </div>

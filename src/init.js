@@ -4,7 +4,6 @@ import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
 import axios from 'axios';
-import getElements from './elements.js';
 import rssParser from './parser.js';
 import { initLocalization } from './locales/index.js';
 import { PROXY_BASE_URL, WATCHER_DELAY } from './constansts.js';
@@ -48,24 +47,44 @@ const requestRss = (url, feedState, postState) => {
   });
 };
 
-export default () => {
-  initLocalization();
+const getFormElements = (formElement) => ({
+  sendFormBtnElement: formElement.querySelector('.js_send-form-btn'),
+  urlInputElement: formElement.querySelector('.js_url-input'),
+  feedbackElement: formElement.querySelector('.js_feedback'),
+});
 
-  const {
-    feedbackElement, rssFormElement,
-    subscriptionsElement, urlInputElement,
-    feedContainerElement, previewModalElement,
-    previewModalTitleElement, previewModalDescriptionElement,
-    previewModalReadAllElement, outputElement,
-    sendFormBtnElement,
-  } = getElements();
+const getOutputElements = (outputElement) => ({
+  subscriptionsElement: outputElement.querySelector('.js_subscriptions'),
+  feedContainerElement: outputElement.querySelector('.js_feed'),
+});
 
+const createPreviewModal = (previewModalElement) => {
   const modal = new Modal(previewModalElement);
-  const rssUrls = [];
+  const previewModalTitleElement = previewModalElement.querySelector('.js_preview-modal-title');
+  const previewModalDescriptionElement = previewModalElement.querySelector('.js_preview-modal-description');
+  const previewModalReadAllElement = previewModalElement.querySelector('.js_preview-modal-read-all');
 
-  const feeds = {};
-  const watchedFeeds = onChange(
-    feeds,
+  const openModal = (title, description, link) => {
+    previewModalTitleElement.textContent = title;
+    previewModalDescriptionElement.textContent = description;
+    previewModalReadAllElement.onclick = () => {
+      const anchor = document.createElement('a');
+      anchor.href = link;
+      anchor.target = '_blank';
+
+      anchor.click();
+    };
+    modal.show();
+  };
+
+  return { openModal };
+};
+
+const getState = (feedContainerElement, subscriptionsElement, previewModalElement) => {
+  const { openModal } = createPreviewModal(previewModalElement);
+
+  const feeds = onChange(
+    {},
     (path, value) => {
       const feedContainer = document.createElement('div');
       const feedTitle = document.createElement('b');
@@ -81,22 +100,8 @@ export default () => {
     },
   );
 
-  const openModal = (title, description, link) => {
-    previewModalTitleElement.textContent = title;
-    previewModalDescriptionElement.textContent = description;
-    previewModalReadAllElement.onclick = () => {
-      const anchor = document.createElement('a');
-      anchor.href = link;
-      anchor.target = '_blank';
-
-      anchor.click();
-    };
-    modal.show();
-  };
-
-  const subscriptionUrls = {};
-  const watchedSubscriptionUrls = onChange(
-    subscriptionUrls,
+  const subscriptions = onChange(
+    {},
     (path, value) => {
       const subscriptionContainer = document.createElement('div');
       subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
@@ -129,9 +134,30 @@ export default () => {
     },
   );
 
+  return { addedUrls: [], feeds, subscriptions };
+};
+
+export default (rssFormElement, previewModalElement, outputElement) => {
+  initLocalization();
+
+  const {
+    sendFormBtnElement,
+    urlInputElement,
+    feedbackElement,
+  } = getFormElements(rssFormElement);
+
+  const {
+    subscriptionsElement,
+    feedContainerElement,
+  } = getOutputElements(outputElement);
+
+  const {
+    addedUrls, feeds, subscriptions,
+  } = getState(feedContainerElement, subscriptionsElement, previewModalElement);
+
   const runWatcher = () => {
     setTimeout(() => {
-      rssUrls.forEach((url) => requestRss(url, watchedFeeds, watchedSubscriptionUrls));
+      addedUrls.forEach((url) => requestRss(url, feeds, subscriptions));
       runWatcher();
     }, WATCHER_DELAY);
   };
@@ -145,14 +171,14 @@ export default () => {
     const url = urlInputElement.value;
 
     urlValidator.validate(url).then(() => {
-      const existedUrl = rssUrls.find((rssUrl) => rssUrl === url);
+      const existedUrl = addedUrls.find((rssUrl) => rssUrl === url);
       if (existedUrl) {
         throw new Error(i18next.t('urlAlredyExist'));
       }
 
-      return requestRss(url, watchedFeeds, watchedSubscriptionUrls);
+      return requestRss(url, feeds, subscriptions);
     }).then(() => {
-      rssUrls.push(url);
+      addedUrls.push(url);
 
       outputElement.classList.remove('d-none');
       feedbackElement.classList.add('text-success');
