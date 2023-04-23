@@ -7,6 +7,7 @@ import axios from 'axios';
 import rssParser from './parser.js';
 import { initLocalization } from './locales/index.js';
 import { PROXY_BASE_URL, WATCHER_DELAY } from './constansts.js';
+import { getFormElements, getOutputElements } from './elements.js';
 
 const requestRss = (url, feedState, postState) => {
   const proxyUrl = new URL('get', PROXY_BASE_URL);
@@ -46,17 +47,6 @@ const requestRss = (url, feedState, postState) => {
     throw new Error(i18next.t('networkError'));
   });
 };
-
-const getFormElements = (formElement) => ({
-  sendFormBtnElement: formElement.querySelector('.js_send-form-btn'),
-  urlInputElement: formElement.querySelector('.js_url-input'),
-  feedbackElement: formElement.querySelector('.js_feedback'),
-});
-
-const getOutputElements = (outputElement) => ({
-  subscriptionsElement: outputElement.querySelector('.js_subscriptions'),
-  feedContainerElement: outputElement.querySelector('.js_feed'),
-});
 
 const createPreviewModal = (previewModalElement) => {
   const modal = new Modal(previewModalElement);

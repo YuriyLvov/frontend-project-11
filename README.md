@@ -11,6 +11,6 @@ Node.js v.18 or higher
 
 ##  How to install:
 ```
-git@github.com:YuriyLvov/frontend-project-11.git
+git clone git@github.com:YuriyLvov/frontend-project-11.git
 cd frontend-project-11
 make install
