@@ -124,7 +124,7 @@ const getState = (feedContainerElement, subscriptionsElement, previewModalElemen
     },
   );
 
-  return { addedUrls: [], feeds, subscriptions };
+  return { feeds, subscriptions };
 };
 
 export default (rssFormElement, previewModalElement, outputElement) => {
@@ -142,12 +142,12 @@ export default (rssFormElement, previewModalElement, outputElement) => {
   } = getOutputElements(outputElement);
 
   const {
-    addedUrls, feeds, subscriptions,
+    feeds, subscriptions,
   } = getState(feedContainerElement, subscriptionsElement, previewModalElement);
 
   const runWatcher = () => {
     setTimeout(() => {
-      addedUrls.forEach((url) => requestRss(url, feeds, subscriptions));
+      Object.keys(feeds).forEach((url) => requestRss(url, feeds, subscriptions));
       runWatcher();
     }, WATCHER_DELAY);
   };
@@ -161,15 +161,13 @@ export default (rssFormElement, previewModalElement, outputElement) => {
     const url = urlInputElement.value;
 
     urlValidator.validate(url).then(() => {
-      const existedUrl = addedUrls.find((rssUrl) => rssUrl === url);
+      const existedUrl = Object.hasOwn(feeds, url);
       if (existedUrl) {
         throw new Error(i18next.t('urlAlredyExist'));
       }
 
       return requestRss(url, feeds, subscriptions);
     }).then(() => {
-      addedUrls.push(url);
-
       outputElement.classList.remove('d-none');
       feedbackElement.classList.add('text-success');
       feedbackElement.textContent = i18next.t('rssAdded');
