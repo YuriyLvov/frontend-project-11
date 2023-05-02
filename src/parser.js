@@ -26,10 +26,9 @@ const rssParser = (contents) => {
   const feed = {
     title: feedTitle.textContent,
     description: feedDescription.textContent,
-    items,
   };
 
-  return feed;
+  return { feed, items };
 };
 
 export default rssParser;

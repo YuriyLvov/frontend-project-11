@@ -16,7 +16,7 @@ const getProxyUrl = (url) => {
   proxyUrl.searchParams.set('disableCache', 'true');
   proxyUrl.searchParams.set('url', url);
 
-  return String(proxyUrl);
+  return proxyUrl.toString();
 };
 
 const requestRss = (url, feedState, postState) => {
@@ -24,18 +24,15 @@ const requestRss = (url, feedState, postState) => {
 
   return axios.get(proxyUrl).then((response) => {
     try {
-      const parsedRss = rssParser(response.data.contents);
+      const { feed, items } = rssParser(response.data.contents);
 
       if (lodash.isPlainObject(feedState) && !feedState[url]) {
         Object.assign(feedState, {
-          [url]: {
-            title: parsedRss.title,
-            description: parsedRss.description,
-          },
+          [url]: feed,
         });
       }
 
-      parsedRss.items.forEach((rssItem) => {
+      items.forEach((rssItem) => {
         if (lodash.isPlainObject(postState) && !postState[rssItem.link]) {
           Object.assign(postState, {
             [rssItem.link]: rssItem,
@@ -92,9 +89,17 @@ const getState = (
 ) => {
   const { openModal } = createPreviewModal(previewModalElement);
 
-  const feeds = onChange(
-    {},
-    (path, value) => {
+  const state = onChange({
+    feeds: {},
+    subscriptions: {},
+    rssInputForm: {
+      message: '',
+      error: '',
+      sendInProgress: false,
+      inputInProgress: false,
+    },
+  }, (path, value) => {
+    if (path.startsWith('feeds.')) {
       const feedContainer = document.createElement('div');
       const feedTitle = document.createElement('b');
       const feedDescription = document.createElement('p');
@@ -107,12 +112,9 @@ const getState = (
 
       feedContainerElement.appendChild(feedContainer);
       outputElement.classList.remove('d-none');
-    },
-  );
+    }
 
-  const subscriptions = onChange(
-    {},
-    (path, value) => {
+    if (path.startsWith('subscriptions.')) {
       const subscriptionContainer = document.createElement('div');
       subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
 
@@ -141,38 +143,32 @@ const getState = (
       subscriptionContainer.appendChild(subscriptionLink);
       subscriptionContainer.appendChild(subscriptionButton);
       subscriptionsElement.appendChild(subscriptionContainer);
-    },
-  );
+    }
 
-  const inputState = onChange(
-    {
-      message: '',
-      error: '',
-      sendInProgress: false,
-      inputInProgress: false,
-    },
-    (path, value) => {
-      if (path === 'message' && value) {
-        feedbackElement.classList.add('text-success');
-        Object.assign(feedbackElement, { textContent: value });
-        Object.assign(urlInputElement, { value: '' });
-      }
-      if (path === 'error' && value) {
-        urlInputElement.classList.add('is-invalid');
-        feedbackElement.classList.add('text-danger');
-        Object.assign(feedbackElement, { textContent: value });
-      }
-      if (path === 'sendInProgress') {
-        Object.assign(sendFormBtnElement, { disabled: value });
-      }
-      if (path === 'inputInProgress' && value) {
-        urlInputElement.classList.remove('is-invalid');
-        feedbackElement.classList.remove('text-danger');
-        feedbackElement.classList.remove('text-success');
-      }
-    },
-  );
-  return { feeds, subscriptions, inputState };
+    if (path === 'rssInputForm.message' && value) {
+      feedbackElement.classList.add('text-success');
+      Object.assign(feedbackElement, { textContent: value });
+      Object.assign(urlInputElement, { value: '' });
+    }
+
+    if (path === 'rssInputForm.error' && value) {
+      urlInputElement.classList.add('is-invalid');
+      feedbackElement.classList.add('text-danger');
+      Object.assign(feedbackElement, { textContent: value });
+    }
+
+    if (path === 'rssInputForm.sendInProgress') {
+      Object.assign(sendFormBtnElement, { disabled: value });
+    }
+
+    if (path === 'rssInputForm.inputInProgress' && value) {
+      urlInputElement.classList.remove('is-invalid');
+      feedbackElement.classList.remove('text-danger');
+      feedbackElement.classList.remove('text-success');
+    }
+  });
+
+  return state;
 };
 
 export default (rssFormElement, previewModalElement, outputElement) => {
@@ -189,9 +185,7 @@ export default (rssFormElement, previewModalElement, outputElement) => {
     feedContainerElement,
   } = getOutputElements(outputElement);
 
-  const {
-    feeds, subscriptions, inputState,
-  } = getState(
+  const state = getState(
     feedContainerElement,
     subscriptionsElement,
     previewModalElement,
@@ -203,8 +197,13 @@ export default (rssFormElement, previewModalElement, outputElement) => {
 
   const runWatcher = () => {
     setTimeout(() => {
-      Object.keys(feeds).forEach((url) => requestRss(url, feeds, subscriptions));
-      runWatcher();
+      const feedUrls = Object.keys(state.feeds);
+      const requestPromises = feedUrls.map(
+        (url) => requestRss(url, state.feeds, state.subscriptions),
+      );
+      Promise.all(requestPromises).then(() => {
+        runWatcher();
+      });
     }, WATCHER_DELAY);
   };
 
@@ -212,32 +211,32 @@ export default (rssFormElement, previewModalElement, outputElement) => {
 
   rssFormElement.addEventListener('submit', (event) => {
     event.preventDefault();
-    inputState.sendInProgress = true;
-    inputState.inputInProgress = false;
+    state.rssInputForm.sendInProgress = true;
+    state.rssInputForm.inputInProgress = false;
 
     const url = urlInputElement.value.replace(/\/$/, '');
 
     urlValidator.validate(url).then(() => {
-      const existedUrl = Object.hasOwn(feeds, url);
+      const existedUrl = Object.hasOwn(state.feeds, url);
       if (existedUrl) {
         throw new Error(i18next.t('urlAlredyExist'));
       }
 
-      return requestRss(url, feeds, subscriptions);
+      return requestRss(url, state.feeds, state.subscriptions);
     }).then(() => {
-      inputState.message = i18next.t('rssAdded');
-      inputState.error = '';
+      state.rssInputForm.message = i18next.t('rssAdded');
+      state.rssInputForm.error = '';
     }).catch((error) => {
-      inputState.message = '';
-      inputState.error = error.message;
+      state.rssInputForm.message = '';
+      state.rssInputForm.error = error.message;
     })
       .finally(() => {
-        inputState.sendInProgress = false;
+        state.rssInputForm.sendInProgress = false;
       });
   });
 
   urlInputElement.addEventListener('input', () => {
-    inputState.inputInProgress = true;
+    state.rssInputForm.inputInProgress = true;
   });
 
   runWatcher();
