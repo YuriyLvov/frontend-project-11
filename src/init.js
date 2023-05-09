@@ -61,17 +61,18 @@ const createPreviewModal = (previewModalElement) => {
   const previewModalTitleElement = previewModalElement.querySelector('.js_preview-modal-title');
   const previewModalDescriptionElement = previewModalElement.querySelector('.js_preview-modal-description');
   const previewModalReadAllElement = previewModalElement.querySelector('.js_preview-modal-read-all');
+  const previewModalReadAllLinkElement = previewModalElement.querySelector('.js_preview-modal-read-all-link');
+
+  previewModalReadAllElement.addEventListener('click', () => {
+    previewModalReadAllLinkElement.click();
+  });
 
   const openModal = (title, description, link) => {
     previewModalTitleElement.textContent = title;
     previewModalDescriptionElement.textContent = description;
-    previewModalReadAllElement.onclick = () => {
-      const anchor = document.createElement('a');
-      anchor.href = link;
-      anchor.target = '_blank';
+    previewModalReadAllLinkElement.href = link;
+    previewModalReadAllLinkElement.target = '_blank';
 
-      anchor.click();
-    };
     modal.show();
   };
 
