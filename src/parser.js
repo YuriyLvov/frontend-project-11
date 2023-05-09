@@ -17,6 +17,7 @@ const rssParser = (contents) => {
       title: title.textContent,
       description: description.textContent,
       link: link.textContent,
+      opened: false,
     };
   });
 

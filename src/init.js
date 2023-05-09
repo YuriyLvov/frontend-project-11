@@ -26,14 +26,14 @@ const requestRss = (url, feedState, postState) => {
     try {
       const { feed, items } = rssParser(response.data.contents);
 
-      if (lodash.isPlainObject(feedState) && !feedState[url]) {
+      if (feedState && !feedState[url]) {
         Object.assign(feedState, {
           [url]: feed,
         });
       }
 
       items.forEach((rssItem) => {
-        if (lodash.isPlainObject(postState) && !postState[rssItem.link]) {
+        if (postState && !postState[rssItem.link]) {
           Object.assign(postState, {
             [rssItem.link]: rssItem,
           });
@@ -78,27 +78,34 @@ const createPreviewModal = (previewModalElement) => {
   return { openModal };
 };
 
-const getState = (
+const STATUSES = {
+  PENDING: 'pending',
+  LOADING: 'loading',
+  SUCCESS: 'success',
+  FAILTURE: 'failture',
+};
+
+const getState = ({
   feedContainerElement,
-  subscriptionsElement,
+  postsElement,
   previewModalElement,
   outputElement,
   feedbackElement,
   urlInputElement,
   sendFormBtnElement,
-) => {
+  spinnerElement,
+}) => {
   const { openModal } = createPreviewModal(previewModalElement);
 
   const state = onChange({
     feeds: {},
-    subscriptions: {},
+    posts: {},
     rssInputForm: {
       message: '',
-      error: '',
-      sendInProgress: false,
-      inputInProgress: false,
+      status: STATUSES.PENDING,
     },
-  }, (path, value) => {
+    // eslint-disable-next-line prefer-arrow-callback
+  }, function changeState(path, value) {
     if (path.startsWith('feeds.')) {
       const feedContainer = document.createElement('div');
       const feedTitle = document.createElement('b');
@@ -114,7 +121,7 @@ const getState = (
       outputElement.classList.remove('d-none');
     }
 
-    if (path.startsWith('subscriptions.')) {
+    if (path.startsWith('posts.') && !path.includes('.opened')) {
       const subscriptionContainer = document.createElement('div');
       subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
 
@@ -134,44 +141,67 @@ const getState = (
       subscriptionButton.classList.add('btn', 'btn-primary');
 
       subscriptionButton.addEventListener('click', () => {
-        subscriptionLink.classList.add('fw-normal');
-        subscriptionLink.classList.remove('fw-bold');
+        lodash.set(this, `${path}.opened`, true);
 
         openModal(value.title, value.description, value.link);
       });
 
       subscriptionContainer.appendChild(subscriptionLink);
       subscriptionContainer.appendChild(subscriptionButton);
-      subscriptionsElement.appendChild(subscriptionContainer);
+      postsElement.appendChild(subscriptionContainer);
+    }
+
+    if (path.startsWith('posts.') && path.includes('.opened') && value) {
+      const url = path.replace('posts.', '').replace('.opened', '');
+      const subscriptionLink = postsElement.querySelector(`a[href="${url}"]`);
+      subscriptionLink.classList.add('fw-normal');
+      subscriptionLink.classList.remove('fw-bold');
     }
 
     if (path === 'rssInputForm.message' && value) {
-      feedbackElement.classList.add('text-success');
       Object.assign(feedbackElement, { textContent: value });
+    }
+
+    if (path === 'rssInputForm.status' && value === STATUSES.SUCCESS) {
       Object.assign(urlInputElement, { value: '' });
-    }
+      spinnerElement.classList.add('d-none');
 
-    if (path === 'rssInputForm.error' && value) {
-      urlInputElement.classList.add('is-invalid');
-      feedbackElement.classList.add('text-danger');
-      Object.assign(feedbackElement, { textContent: value });
-    }
-
-    if (path === 'rssInputForm.sendInProgress') {
-      Object.assign(sendFormBtnElement, { disabled: value });
-    }
-
-    if (path === 'rssInputForm.inputInProgress' && value) {
       urlInputElement.classList.remove('is-invalid');
+
+      feedbackElement.classList.add('text-success');
       feedbackElement.classList.remove('text-danger');
+      feedbackElement.classList.remove('d-none');
+    }
+
+    if (path === 'rssInputForm.status' && value === STATUSES.FAILTURE) {
+      spinnerElement.classList.add('d-none');
+
+      urlInputElement.classList.add('is-invalid');
+
+      feedbackElement.classList.add('text-danger');
+      feedbackElement.classList.remove('d-none');
       feedbackElement.classList.remove('text-success');
+    }
+
+    if (path === 'rssInputForm.status' && value === STATUSES.LOADING) {
+      Object.assign(sendFormBtnElement, { disabled: true });
+      spinnerElement.classList.remove('d-none');
+
+      feedbackElement.classList.add('d-none');
+    }
+
+    if (path === 'rssInputForm.status' && value === STATUSES.PENDING) {
+      Object.assign(sendFormBtnElement, { disabled: false });
+      spinnerElement.classList.add('d-none');
+
+      feedbackElement.classList.remove('d-none');
     }
   });
 
   return state;
 };
 
-export default (rssFormElement, previewModalElement, outputElement) => {
+export default (rssFormElement, previewModalElement, outputElement, spinnerElement) => {
   initLocalization();
 
   const {
@@ -181,25 +211,26 @@ export default (rssFormElement, previewModalElement, outputElement) => {
   } = getFormElements(rssFormElement);
 
   const {
-    subscriptionsElement,
+    postsElement,
     feedContainerElement,
   } = getOutputElements(outputElement);
 
-  const state = getState(
+  const state = getState({
     feedContainerElement,
-    subscriptionsElement,
+    postsElement,
     previewModalElement,
     outputElement,
     feedbackElement,
     urlInputElement,
     sendFormBtnElement,
-  );
+    spinnerElement,
+  });
 
   const runWatcher = () => {
     setTimeout(() => {
       const feedUrls = Object.keys(state.feeds);
       const requestPromises = feedUrls.map(
-        (url) => requestRss(url, state.feeds, state.subscriptions),
+        (url) => requestRss(url, state.feeds, state.posts),
       );
       Promise.all(requestPromises).then(() => {
         runWatcher();
@@ -211,8 +242,7 @@ export default (rssFormElement, previewModalElement, outputElement) => {
 
   rssFormElement.addEventListener('submit', (event) => {
     event.preventDefault();
-    state.rssInputForm.sendInProgress = true;
-    state.rssInputForm.inputInProgress = false;
+    state.rssInputForm.status = STATUSES.LOADING;
 
     const url = urlInputElement.value.replace(/\/$/, '');
 
@@ -222,21 +252,17 @@ export default (rssFormElement, previewModalElement, outputElement) => {
         throw new Error(i18next.t('urlAlredyExist'));
       }
 
-      return requestRss(url, state.feeds, state.subscriptions);
+      return requestRss(url, state.feeds, state.posts);
     }).then(() => {
       state.rssInputForm.message = i18next.t('rssAdded');
-      state.rssInputForm.error = '';
+      state.rssInputForm.status = STATUSES.SUCCESS;
     }).catch((error) => {
-      state.rssInputForm.message = '';
-      state.rssInputForm.error = error.message;
+      state.rssInputForm.message = error.message;
+      state.rssInputForm.status = STATUSES.FAILTURE;
     })
       .finally(() => {
-        state.rssInputForm.sendInProgress = false;
+        state.rssInputForm.status = STATUSES.PENDING;
       });
-  });
-
-  urlInputElement.addEventListener('input', () => {
-    state.rssInputForm.inputInProgress = true;
   });
 
   runWatcher();

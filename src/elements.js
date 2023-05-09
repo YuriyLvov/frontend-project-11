@@ -5,6 +5,6 @@ export const getFormElements = (formElement) => ({
 });
 
 export const getOutputElements = (outputElement) => ({
-  subscriptionsElement: outputElement.querySelector('.js_subscriptions'),
+  postsElement: outputElement.querySelector('.js_posts'),
   feedContainerElement: outputElement.querySelector('.js_feed'),
 });
