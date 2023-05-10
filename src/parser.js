@@ -1,6 +1,6 @@
 const domParser = new DOMParser();
 
-const rssParser = (contents) => {
+const rssParser = (contents, feedUrl) => {
   const xmlDom = domParser.parseFromString(contents, 'application/xml');
   const xmlDomError = xmlDom.querySelector('parsererror');
 
@@ -27,6 +27,7 @@ const rssParser = (contents) => {
   const feed = {
     title: feedTitle.textContent,
     description: feedDescription.textContent,
+    url: feedUrl,
   };
 
   return { feed, items };

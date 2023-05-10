@@ -1,5 +1,4 @@
 import { Modal } from 'bootstrap';
-import lodash from 'lodash';
 import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
@@ -24,19 +23,22 @@ const requestRss = (url, feedState, postState) => {
 
   return axios.get(proxyUrl).then((response) => {
     try {
-      const { feed, items } = rssParser(response.data.contents);
+      const { feed, items } = rssParser(response.data.contents, url);
+      const feedAlreadyExists = Array.isArray(feedState) && feedState.some(
+        (feedFromState) => feedFromState.url === url,
+      );
 
-      if (feedState && !feedState[url]) {
-        Object.assign(feedState, {
-          [url]: feed,
-        });
+      if (!feedAlreadyExists) {
+        feedState.push(feed);
       }
 
       items.forEach((rssItem) => {
-        if (postState && !postState[rssItem.link]) {
-          Object.assign(postState, {
-            [rssItem.link]: rssItem,
-          });
+        const itemAlreadyExists = Array.isArray(postState) && postState.some(
+          (itemFromState) => rssItem.link === itemFromState.link,
+        );
+
+        if (!itemAlreadyExists) {
+          postState.push(rssItem);
         }
       });
     } catch (error) {
@@ -99,21 +101,22 @@ const getState = ({
   const { openModal } = createPreviewModal(previewModalElement);
 
   const state = onChange({
-    feeds: {},
-    posts: {},
+    feeds: [],
+    posts: [],
     rssInputForm: {
       message: '',
       status: STATUSES.PENDING,
     },
     // eslint-disable-next-line prefer-arrow-callback
-  }, function changeState(path, value) {
-    if (path.startsWith('feeds.')) {
+  }, function changeState(path, value, prevValue, applyData) {
+    if (path === 'feeds') {
+      const currentFeed = applyData.args[0];
       const feedContainer = document.createElement('div');
       const feedTitle = document.createElement('b');
       const feedDescription = document.createElement('p');
 
-      feedTitle.textContent = value.title;
-      feedDescription.textContent = value.description;
+      feedTitle.textContent = currentFeed.title;
+      feedDescription.textContent = currentFeed.description;
 
       feedContainer.appendChild(feedTitle);
       feedContainer.appendChild(feedDescription);
@@ -122,14 +125,15 @@ const getState = ({
       outputElement.classList.remove('d-none');
     }
 
-    if (path.startsWith('posts.') && !path.includes('.opened')) {
+    if (path === 'posts' && applyData && applyData.args && applyData.name === 'push') {
+      const currentPost = applyData.args[0];
       const subscriptionContainer = document.createElement('div');
       subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
 
       const subscriptionLink = document.createElement('a');
-      subscriptionLink.href = value.link;
+      subscriptionLink.href = currentPost.link;
       subscriptionLink.target = '_blank';
-      subscriptionLink.textContent = value.title;
+      subscriptionLink.textContent = currentPost.title;
       subscriptionLink.classList.add('fw-bold');
 
       subscriptionLink.addEventListener('click', () => {
@@ -142,9 +146,15 @@ const getState = ({
       subscriptionButton.classList.add('btn', 'btn-primary');
 
       subscriptionButton.addEventListener('click', () => {
-        lodash.set(this, `${path}.opened`, true);
+        this.posts = this.posts.map((post) => {
+          if (post.link === currentPost.link) {
+            return { ...post, opened: true };
+          }
 
-        openModal(value.title, value.description, value.link);
+          return post;
+        });
+
+        openModal(currentPost.title, currentPost.description, currentPost.link);
       });
 
       subscriptionContainer.appendChild(subscriptionLink);
@@ -152,9 +162,12 @@ const getState = ({
       postsElement.appendChild(subscriptionContainer);
     }
 
-    if (path.startsWith('posts.') && path.includes('.opened') && value) {
-      const url = path.replace('posts.', '').replace('.opened', '');
-      const subscriptionLink = postsElement.querySelector(`a[href="${url}"]`);
+    if (path === 'posts' && !applyData) {
+      const changedPost = value.find((post) => (
+        prevValue.find((prevPost) => post.opened !== prevPost.opened)
+      ));
+
+      const subscriptionLink = postsElement.querySelector(`a[href="${changedPost.link}"]`);
       subscriptionLink.classList.add('fw-normal');
       subscriptionLink.classList.remove('fw-bold');
     }
@@ -229,7 +242,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
 
   const runWatcher = () => {
     setTimeout(() => {
-      const feedUrls = Object.keys(state.feeds);
+      const feedUrls = state.feeds.map(({ url }) => url);
       const requestPromises = feedUrls.map(
         (url) => requestRss(url, state.feeds, state.posts),
       );
@@ -248,7 +261,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
     const url = urlInputElement.value.replace(/\/$/, '');
 
     urlValidator.validate(url).then(() => {
-      const existedUrl = Object.hasOwn(state.feeds, url);
+      const existedUrl = state.feeds.some((feed) => feed.url === url);
       if (existedUrl) {
         throw new Error(i18next.t('urlAlredyExist'));
       }
