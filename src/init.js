@@ -81,6 +81,105 @@ const createPreviewModal = (previewModalElement) => {
   return { openModal };
 };
 
+const onFeedsChanged = ({ currentFeed, feedContainerElement, outputElement }) => {
+  const feedContainer = document.createElement('div');
+  const feedTitle = document.createElement('b');
+  const feedDescription = document.createElement('p');
+
+  feedTitle.textContent = currentFeed.title;
+  feedDescription.textContent = currentFeed.description;
+
+  feedContainer.appendChild(feedTitle);
+  feedContainer.appendChild(feedDescription);
+
+  feedContainerElement.appendChild(feedContainer);
+  outputElement.classList.remove('d-none');
+};
+
+const onPostAdded = ({ currentPost, postsElement, openModal }) => {
+  const subscriptionContainer = document.createElement('div');
+  subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
+
+  const subscriptionLink = document.createElement('a');
+  subscriptionLink.href = currentPost.link;
+  subscriptionLink.target = '_blank';
+  subscriptionLink.textContent = currentPost.title;
+  subscriptionLink.classList.add('fw-bold');
+
+  subscriptionLink.addEventListener('click', () => {
+    subscriptionLink.classList.add('fw-normal');
+    subscriptionLink.classList.remove('fw-bold');
+  });
+
+  const subscriptionButton = document.createElement('button');
+  subscriptionButton.textContent = i18next.t('viewPost');
+  subscriptionButton.classList.add('btn', 'btn-primary');
+
+  subscriptionButton.addEventListener('click', () => {
+    this.posts = this.posts.map((post) => {
+      if (post.link === currentPost.link) {
+        return { ...post, opened: true };
+      }
+
+      return post;
+    });
+
+    openModal(currentPost.title, currentPost.description, currentPost.link);
+  });
+
+  subscriptionContainer.appendChild(subscriptionLink);
+  subscriptionContainer.appendChild(subscriptionButton);
+  postsElement.appendChild(subscriptionContainer);
+};
+
+const onError = ({ feedbackElement, value }) => {
+  Object.assign(feedbackElement, { textContent: value });
+};
+
+const onSuccess = ({ feedbackElement, spinnerElement, urlInputElement }) => {
+  Object.assign(feedbackElement, { textContent: i18next.t('rssAdded') });
+  Object.assign(urlInputElement, { value: '' });
+  spinnerElement.classList.add('d-none');
+
+  urlInputElement.classList.remove('is-invalid');
+
+  feedbackElement.classList.add('text-success');
+  feedbackElement.classList.remove('text-danger');
+  feedbackElement.classList.remove('d-none');
+};
+
+const onFailture = ({ feedbackElement, spinnerElement, urlInputElement }) => {
+  spinnerElement.classList.add('d-none');
+
+  urlInputElement.classList.add('is-invalid');
+
+  feedbackElement.classList.add('text-danger');
+  feedbackElement.classList.remove('d-none');
+  feedbackElement.classList.remove('text-success');
+};
+
+const onLoading = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
+  console.log('onLoading');
+  sendFormBtnElement.setAttribute('disabled', true);
+  spinnerElement.classList.remove('d-none');
+
+  feedbackElement.classList.add('d-none');
+};
+
+const onPending = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
+  console.log('onPending');
+  sendFormBtnElement.removeAttribute('disabled');
+  spinnerElement.classList.add('d-none');
+
+  feedbackElement.classList.remove('d-none');
+};
+
+const onPostRead = ({ changedPost, postsElement }) => {
+  const subscriptionLink = postsElement.querySelector(`a[href="${changedPost.link}"]`);
+  subscriptionLink.classList.add('fw-normal');
+  subscriptionLink.classList.remove('fw-bold');
+};
+
 const STATUSES = {
   PENDING: 'pending',
   LOADING: 'loading',
@@ -104,62 +203,21 @@ const getState = ({
     feeds: [],
     posts: [],
     rssInputForm: {
-      message: '',
+      error: '',
       status: STATUSES.PENDING,
     },
     // eslint-disable-next-line prefer-arrow-callback
   }, function changeState(path, value, prevValue, applyData) {
     if (path === 'feeds') {
       const currentFeed = applyData.args[0];
-      const feedContainer = document.createElement('div');
-      const feedTitle = document.createElement('b');
-      const feedDescription = document.createElement('p');
 
-      feedTitle.textContent = currentFeed.title;
-      feedDescription.textContent = currentFeed.description;
-
-      feedContainer.appendChild(feedTitle);
-      feedContainer.appendChild(feedDescription);
-
-      feedContainerElement.appendChild(feedContainer);
-      outputElement.classList.remove('d-none');
+      onFeedsChanged({ currentFeed, feedContainerElement, outputElement });
     }
 
     if (path === 'posts' && applyData && applyData.args && applyData.name === 'push') {
       const currentPost = applyData.args[0];
-      const subscriptionContainer = document.createElement('div');
-      subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
 
-      const subscriptionLink = document.createElement('a');
-      subscriptionLink.href = currentPost.link;
-      subscriptionLink.target = '_blank';
-      subscriptionLink.textContent = currentPost.title;
-      subscriptionLink.classList.add('fw-bold');
-
-      subscriptionLink.addEventListener('click', () => {
-        subscriptionLink.classList.add('fw-normal');
-        subscriptionLink.classList.remove('fw-bold');
-      });
-
-      const subscriptionButton = document.createElement('button');
-      subscriptionButton.textContent = i18next.t('viewPost');
-      subscriptionButton.classList.add('btn', 'btn-primary');
-
-      subscriptionButton.addEventListener('click', () => {
-        this.posts = this.posts.map((post) => {
-          if (post.link === currentPost.link) {
-            return { ...post, opened: true };
-          }
-
-          return post;
-        });
-
-        openModal(currentPost.title, currentPost.description, currentPost.link);
-      });
-
-      subscriptionContainer.appendChild(subscriptionLink);
-      subscriptionContainer.appendChild(subscriptionButton);
-      postsElement.appendChild(subscriptionContainer);
+      onPostAdded({ currentPost, postsElement, openModal });
     }
 
     if (path === 'posts' && !applyData) {
@@ -167,48 +225,27 @@ const getState = ({
         prevValue.find((prevPost) => post.opened !== prevPost.opened)
       ));
 
-      const subscriptionLink = postsElement.querySelector(`a[href="${changedPost.link}"]`);
-      subscriptionLink.classList.add('fw-normal');
-      subscriptionLink.classList.remove('fw-bold');
+      onPostRead({ changedPost, postsElement });
     }
 
-    if (path === 'rssInputForm.message' && value) {
-      Object.assign(feedbackElement, { textContent: value });
+    if (path === 'rssInputForm.error' && value) {
+      onError({ feedbackElement, value });
     }
 
     if (path === 'rssInputForm.status' && value === STATUSES.SUCCESS) {
-      Object.assign(urlInputElement, { value: '' });
-      spinnerElement.classList.add('d-none');
-
-      urlInputElement.classList.remove('is-invalid');
-
-      feedbackElement.classList.add('text-success');
-      feedbackElement.classList.remove('text-danger');
-      feedbackElement.classList.remove('d-none');
+      onSuccess({ feedbackElement, spinnerElement, urlInputElement });
     }
 
     if (path === 'rssInputForm.status' && value === STATUSES.FAILTURE) {
-      spinnerElement.classList.add('d-none');
-
-      urlInputElement.classList.add('is-invalid');
-
-      feedbackElement.classList.add('text-danger');
-      feedbackElement.classList.remove('d-none');
-      feedbackElement.classList.remove('text-success');
+      onFailture({ feedbackElement, spinnerElement, urlInputElement });
     }
 
     if (path === 'rssInputForm.status' && value === STATUSES.LOADING) {
-      Object.assign(sendFormBtnElement, { disabled: true });
-      spinnerElement.classList.remove('d-none');
-
-      feedbackElement.classList.add('d-none');
+      onLoading({ feedbackElement, sendFormBtnElement, spinnerElement });
     }
 
     if (path === 'rssInputForm.status' && value === STATUSES.PENDING) {
-      Object.assign(sendFormBtnElement, { disabled: false });
-      spinnerElement.classList.add('d-none');
-
-      feedbackElement.classList.remove('d-none');
+      onPending({ feedbackElement, sendFormBtnElement, spinnerElement });
     }
   });
 
@@ -252,28 +289,27 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
     }, WATCHER_DELAY);
   };
 
-  const urlValidator = yup.string().url().required();
-
   rssFormElement.addEventListener('submit', (event) => {
     event.preventDefault();
     state.rssInputForm.status = STATUSES.LOADING;
 
-    const url = urlInputElement.value.replace(/\/$/, '');
+    const urlValidator = yup.string()
+      .transform((value) => value.replace(/\/$/, ''))
+      .url()
+      .notOneOf(
+        state.feeds.map((feed) => feed.url),
+        i18next.t('urlAlredyExist'),
+      )
+      .required();
 
-    urlValidator.validate(url).then(() => {
-      const existedUrl = state.feeds.some((feed) => feed.url === url);
-      if (existedUrl) {
-        throw new Error(i18next.t('urlAlredyExist'));
-      }
-
-      return requestRss(url, state.feeds, state.posts);
-    }).then(() => {
-      state.rssInputForm.message = i18next.t('rssAdded');
-      state.rssInputForm.status = STATUSES.SUCCESS;
-    }).catch((error) => {
-      state.rssInputForm.message = error.message;
-      state.rssInputForm.status = STATUSES.FAILTURE;
-    })
+    urlValidator.validate(urlInputElement.value)
+      .then((url) => requestRss(url, state.feeds, state.posts))
+      .then(() => {
+        state.rssInputForm.status = STATUSES.SUCCESS;
+      }).catch((error) => {
+        state.rssInputForm.error = error.message;
+        state.rssInputForm.status = STATUSES.FAILTURE;
+      })
       .finally(() => {
         state.rssInputForm.status = STATUSES.PENDING;
       });
