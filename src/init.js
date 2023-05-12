@@ -18,15 +18,18 @@ const getProxyUrl = (url) => {
   return proxyUrl.toString();
 };
 
-const requestRss = (url, feedState, postState) => {
+const requestRss = ({
+  url,
+  feedState,
+  postState,
+  rssUrlsState,
+}) => {
   const proxyUrl = getProxyUrl(url);
 
   return axios.get(proxyUrl).then((response) => {
     try {
-      const { feed, items } = rssParser(response.data.contents, url);
-      const feedAlreadyExists = Array.isArray(feedState) && feedState.some(
-        (feedFromState) => feedFromState.url === url,
-      );
+      const { feed, items } = rssParser(response.data.contents);
+      const feedAlreadyExists = rssUrlsState.includes(url);
 
       if (!feedAlreadyExists) {
         feedState.push(feed);
@@ -45,6 +48,7 @@ const requestRss = (url, feedState, postState) => {
       console.error(error);
       throw new Error(i18next.t('notValid'));
     }
+    return url;
   }).catch((error) => {
     if (error.message === i18next.t('notValid')) {
       throw error;
@@ -96,7 +100,12 @@ const onFeedsChanged = ({ currentFeed, feedContainerElement, outputElement }) =>
   outputElement.classList.remove('d-none');
 };
 
-const onPostAdded = ({ currentPost, postsElement, openModal }) => {
+const onPostAdded = ({
+  currentPost,
+  postsElement,
+  openModal,
+  openedPosts,
+}) => {
   const subscriptionContainer = document.createElement('div');
   subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
 
@@ -116,13 +125,7 @@ const onPostAdded = ({ currentPost, postsElement, openModal }) => {
   subscriptionButton.classList.add('btn', 'btn-primary');
 
   subscriptionButton.addEventListener('click', () => {
-    this.posts = this.posts.map((post) => {
-      if (post.link === currentPost.link) {
-        return { ...post, opened: true };
-      }
-
-      return post;
-    });
+    openedPosts.push(currentPost.link);
 
     openModal(currentPost.title, currentPost.description, currentPost.link);
   });
@@ -159,7 +162,6 @@ const onFailture = ({ feedbackElement, spinnerElement, urlInputElement }) => {
 };
 
 const onLoading = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
-  console.log('onLoading');
   sendFormBtnElement.setAttribute('disabled', true);
   spinnerElement.classList.remove('d-none');
 
@@ -167,15 +169,14 @@ const onLoading = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
 };
 
 const onPending = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
-  console.log('onPending');
   sendFormBtnElement.removeAttribute('disabled');
   spinnerElement.classList.add('d-none');
 
   feedbackElement.classList.remove('d-none');
 };
 
-const onPostRead = ({ changedPost, postsElement }) => {
-  const subscriptionLink = postsElement.querySelector(`a[href="${changedPost.link}"]`);
+const onPostOpened = ({ openedUrl, postsElement }) => {
+  const subscriptionLink = postsElement.querySelector(`a[href="${openedUrl}"]`);
   subscriptionLink.classList.add('fw-normal');
   subscriptionLink.classList.remove('fw-bold');
 };
@@ -202,6 +203,8 @@ const getState = ({
   const state = onChange({
     feeds: [],
     posts: [],
+    rssUrls: [],
+    openedPosts: [],
     rssInputForm: {
       error: '',
       status: STATUSES.PENDING,
@@ -217,15 +220,16 @@ const getState = ({
     if (path === 'posts' && applyData && applyData.args && applyData.name === 'push') {
       const currentPost = applyData.args[0];
 
-      onPostAdded({ currentPost, postsElement, openModal });
+      onPostAdded({
+        currentPost,
+        postsElement,
+        openModal,
+        openedPosts: this.openedPosts,
+      });
     }
 
-    if (path === 'posts' && !applyData) {
-      const changedPost = value.find((post) => (
-        prevValue.find((prevPost) => post.opened !== prevPost.opened)
-      ));
-
-      onPostRead({ changedPost, postsElement });
+    if (path === 'openedPosts') {
+      onPostOpened({ openedUrl: applyData.args[0], postsElement });
     }
 
     if (path === 'rssInputForm.error' && value) {
@@ -279,9 +283,13 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
 
   const runWatcher = () => {
     setTimeout(() => {
-      const feedUrls = state.feeds.map(({ url }) => url);
-      const requestPromises = feedUrls.map(
-        (url) => requestRss(url, state.feeds, state.posts),
+      const requestPromises = state.rssUrls.map(
+        (url) => requestRss({
+          url,
+          feedState: state.feeds,
+          postState: state.posts,
+          rssUrlsState: state.rssUrls,
+        }),
       );
       Promise.all(requestPromises).then(() => {
         runWatcher();
@@ -297,14 +305,20 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
       .transform((value) => value.replace(/\/$/, ''))
       .url()
       .notOneOf(
-        state.feeds.map((feed) => feed.url),
+        state.rssUrls,
         i18next.t('urlAlredyExist'),
       )
       .required();
 
     urlValidator.validate(urlInputElement.value)
-      .then((url) => requestRss(url, state.feeds, state.posts))
-      .then(() => {
+      .then((url) => requestRss({
+        url,
+        feedState: state.feeds,
+        postState: state.posts,
+        rssUrlsState: state.rssUrls,
+      }))
+      .then((url) => {
+        state.rssUrls.push(url);
         state.rssInputForm.status = STATUSES.SUCCESS;
       }).catch((error) => {
         state.rssInputForm.error = error.message;
