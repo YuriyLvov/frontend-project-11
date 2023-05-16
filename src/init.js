@@ -31,48 +31,42 @@ const getProxyUrl = (url) => {
   return proxyUrl.toString();
 };
 
-const requestRss = ({
-  url,
-  feedState,
-  postState,
-}) => {
+const requestRss = (url) => {
   const proxyUrl = getProxyUrl(url);
 
-  return axios.get(proxyUrl).then((response) => {
-    try {
-      const { feed, items } = rssParser(response.data.contents, url);
-      const feedAlreadyExists = feedState.map(({ url: feedUrl }) => feedUrl).includes(url);
+  return axios.get(proxyUrl)
+    .then((response) => {
+      try {
+        const parsedRss = rssParser(response.data.contents, url);
 
-      if (!feedAlreadyExists) {
-        feedState.push(feed);
+        return parsedRss;
+      } catch (error) {
+        console.error(error);
+        throw new Error(i18next.t('notValid'));
+      }
+    })
+    .catch((error) => {
+      if (error.message === i18next.t('notValid')) {
+        throw error;
       }
 
-      items.forEach((rssItem) => {
-        const itemAlreadyExists = Array.isArray(postState) && postState.some(
-          (itemFromState) => rssItem.link === itemFromState.link,
-        );
+      if (error?.response?.status < 200 || error?.response?.status > 299) {
+        throw new Error(i18next.t('notValid'));
+      }
 
-        if (!itemAlreadyExists) {
-          postState.push(rssItem);
-        }
-      });
-    } catch (error) {
-      console.error(error);
-      throw new Error(i18next.t('notValid'));
-    }
-    return url;
-  }).catch((error) => {
-    if (error.message === i18next.t('notValid')) {
-      throw error;
-    }
-
-    if (error?.response?.status < 200 || error?.response?.status > 299) {
-      throw new Error(i18next.t('notValid'));
-    }
-
-    throw new Error(i18next.t('networkError'));
-  });
+      throw new Error(i18next.t('networkError'));
+    });
 };
+
+const updatePosts = (posts, postState) => posts.forEach((post) => {
+  const postAlreadyExists = Array.isArray(postState) && postState.some(
+    (itemFromState) => post.link === itemFromState.link,
+  );
+
+  if (!postAlreadyExists) {
+    postState.push(post);
+  }
+});
 
 const createPreviewModal = (previewModalElement) => {
   const modal = new Modal(previewModalElement);
@@ -220,11 +214,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
   const runWatcher = () => {
     setTimeout(() => {
       const requestPromises = state.feeds.map(
-        ({ url }) => requestRss({
-          url,
-          feedState: state.feeds,
-          postState: state.posts,
-        }),
+        ({ url }) => requestRss(url).then(({ items }) => updatePosts(items, state.posts)),
       );
       Promise.all(requestPromises).then(() => {
         runWatcher();
@@ -255,11 +245,14 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
           return null;
         }
 
-        return requestRss({
-          url,
-          feedState: state.feeds,
-          postState: state.posts,
-        });
+        return requestRss(url);
+      })
+      .then((parsedRss) => {
+        if (!parsedRss) {
+          return;
+        }
+        state.feeds.push(parsedRss.feed);
+        updatePosts(parsedRss.items, state.posts);
       })
       .catch((error) => {
         state.rssInputForm.error = error.message;
