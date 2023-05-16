@@ -6,6 +6,19 @@ import axios from 'axios';
 import rssParser from './parser.js';
 import { initLocalization } from './locales/index.js';
 import { getFormElements, getOutputElements } from './elements.js';
+import {
+  onError,
+  onFormFailture,
+  onFeedsChanged,
+  onFormValidating,
+  onFormPending,
+  onPostAdded,
+  onPostOpened,
+  onLodaing,
+  onLoadingFailture,
+  onLoadingPending,
+  onLoadingSuccess,
+} from './view.js';
 
 const PROXY_BASE_URL = 'https://allorigins.hexlet.app';
 const WATCHER_DELAY = 5000;
@@ -22,14 +35,13 @@ const requestRss = ({
   url,
   feedState,
   postState,
-  rssUrlsState,
 }) => {
   const proxyUrl = getProxyUrl(url);
 
   return axios.get(proxyUrl).then((response) => {
     try {
-      const { feed, items } = rssParser(response.data.contents);
-      const feedAlreadyExists = rssUrlsState.includes(url);
+      const { feed, items } = rssParser(response.data.contents, url);
+      const feedAlreadyExists = feedState.map(({ url: feedUrl }) => feedUrl).includes(url);
 
       if (!feedAlreadyExists) {
         feedState.push(feed);
@@ -64,20 +76,15 @@ const requestRss = ({
 
 const createPreviewModal = (previewModalElement) => {
   const modal = new Modal(previewModalElement);
-  const previewModalTitleElement = previewModalElement.querySelector('.js_preview-modal-title');
-  const previewModalDescriptionElement = previewModalElement.querySelector('.js_preview-modal-description');
-  const previewModalReadAllElement = previewModalElement.querySelector('.js_preview-modal-read-all');
-  const previewModalReadAllLinkElement = previewModalElement.querySelector('.js_preview-modal-read-all-link');
-
-  previewModalReadAllElement.addEventListener('click', () => {
-    previewModalReadAllLinkElement.click();
-  });
+  const previewModalTitleElement = previewModalElement.querySelector('[data-js-selector="preview-modal-title"]');
+  const previewModalDescriptionElement = previewModalElement.querySelector('[data-js-selector="preview-modal-description"]');
+  const previewModalReadAllElement = previewModalElement.querySelector('[data-js-selector="preview-modal-read-completely"]');
 
   const openModal = (title, description, link) => {
     previewModalTitleElement.textContent = title;
     previewModalDescriptionElement.textContent = description;
-    previewModalReadAllLinkElement.href = link;
-    previewModalReadAllLinkElement.target = '_blank';
+    previewModalReadAllElement.href = link;
+    previewModalReadAllElement.target = '_blank';
 
     modal.show();
   };
@@ -85,103 +92,13 @@ const createPreviewModal = (previewModalElement) => {
   return { openModal };
 };
 
-const onFeedsChanged = ({ currentFeed, feedContainerElement, outputElement }) => {
-  const feedContainer = document.createElement('div');
-  const feedTitle = document.createElement('b');
-  const feedDescription = document.createElement('p');
-
-  feedTitle.textContent = currentFeed.title;
-  feedDescription.textContent = currentFeed.description;
-
-  feedContainer.appendChild(feedTitle);
-  feedContainer.appendChild(feedDescription);
-
-  feedContainerElement.appendChild(feedContainer);
-  outputElement.classList.remove('d-none');
+const FORM_STATUSES = {
+  PENDING: 'pending',
+  FAILTURE: 'failture',
+  VALIDATING: 'validating',
 };
 
-const onPostAdded = ({
-  currentPost,
-  postsElement,
-  openModal,
-  openedPosts,
-}) => {
-  const subscriptionContainer = document.createElement('div');
-  subscriptionContainer.classList.add('mb-3', 'd-flex', 'justify-content-between', 'align-items-start');
-
-  const subscriptionLink = document.createElement('a');
-  subscriptionLink.href = currentPost.link;
-  subscriptionLink.target = '_blank';
-  subscriptionLink.textContent = currentPost.title;
-  subscriptionLink.classList.add('fw-bold');
-
-  subscriptionLink.addEventListener('click', () => {
-    subscriptionLink.classList.add('fw-normal');
-    subscriptionLink.classList.remove('fw-bold');
-  });
-
-  const subscriptionButton = document.createElement('button');
-  subscriptionButton.textContent = i18next.t('viewPost');
-  subscriptionButton.classList.add('btn', 'btn-primary');
-
-  subscriptionButton.addEventListener('click', () => {
-    openedPosts.push(currentPost.link);
-
-    openModal(currentPost.title, currentPost.description, currentPost.link);
-  });
-
-  subscriptionContainer.appendChild(subscriptionLink);
-  subscriptionContainer.appendChild(subscriptionButton);
-  postsElement.appendChild(subscriptionContainer);
-};
-
-const onError = ({ feedbackElement, value }) => {
-  Object.assign(feedbackElement, { textContent: value });
-};
-
-const onSuccess = ({ feedbackElement, spinnerElement, urlInputElement }) => {
-  Object.assign(feedbackElement, { textContent: i18next.t('rssAdded') });
-  Object.assign(urlInputElement, { value: '' });
-  spinnerElement.classList.add('d-none');
-
-  urlInputElement.classList.remove('is-invalid');
-
-  feedbackElement.classList.add('text-success');
-  feedbackElement.classList.remove('text-danger');
-  feedbackElement.classList.remove('d-none');
-};
-
-const onFailture = ({ feedbackElement, spinnerElement, urlInputElement }) => {
-  spinnerElement.classList.add('d-none');
-
-  urlInputElement.classList.add('is-invalid');
-
-  feedbackElement.classList.add('text-danger');
-  feedbackElement.classList.remove('d-none');
-  feedbackElement.classList.remove('text-success');
-};
-
-const onLoading = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
-  sendFormBtnElement.setAttribute('disabled', true);
-  spinnerElement.classList.remove('d-none');
-
-  feedbackElement.classList.add('d-none');
-};
-
-const onPending = ({ feedbackElement, sendFormBtnElement, spinnerElement }) => {
-  sendFormBtnElement.removeAttribute('disabled');
-  spinnerElement.classList.add('d-none');
-
-  feedbackElement.classList.remove('d-none');
-};
-
-const onPostOpened = ({ openedUrl, postsElement }) => {
-  const subscriptionLink = postsElement.querySelector(`a[href="${openedUrl}"]`);
-  subscriptionLink.classList.add('fw-normal');
-  subscriptionLink.classList.remove('fw-bold');
-};
-
-const STATUSES = {
+const LOADING_STATUSES = {
   PENDING: 'pending',
   LOADING: 'loading',
   SUCCESS: 'success',
@@ -203,11 +120,14 @@ const getState = ({
   const state = onChange({
     feeds: [],
     posts: [],
-    rssUrls: [],
-    openedPosts: [],
+    readedPosts: [],
     rssInputForm: {
       error: '',
-      status: STATUSES.PENDING,
+      status: FORM_STATUSES.PENDING,
+    },
+    loadingState: {
+      error: '',
+      status: '',
     },
     // eslint-disable-next-line prefer-arrow-callback
   }, function changeState(path, value, prevValue, applyData) {
@@ -224,11 +144,11 @@ const getState = ({
         currentPost,
         postsElement,
         openModal,
-        openedPosts: this.openedPosts,
+        readedPosts: this.readedPosts,
       });
     }
 
-    if (path === 'openedPosts') {
+    if (path === 'readedPosts') {
       onPostOpened({ openedUrl: applyData.args[0], postsElement });
     }
 
@@ -236,20 +156,36 @@ const getState = ({
       onError({ feedbackElement, value });
     }
 
-    if (path === 'rssInputForm.status' && value === STATUSES.SUCCESS) {
-      onSuccess({ feedbackElement, spinnerElement, urlInputElement });
+    if (path === 'rssInputForm.status' && value === FORM_STATUSES.FAILTURE) {
+      onFormFailture({ feedbackElement, spinnerElement, urlInputElement });
     }
 
-    if (path === 'rssInputForm.status' && value === STATUSES.FAILTURE) {
-      onFailture({ feedbackElement, spinnerElement, urlInputElement });
+    if (path === 'rssInputForm.status' && value === FORM_STATUSES.VALIDATING) {
+      onFormValidating({ feedbackElement, sendFormBtnElement, spinnerElement });
     }
 
-    if (path === 'rssInputForm.status' && value === STATUSES.LOADING) {
-      onLoading({ feedbackElement, sendFormBtnElement, spinnerElement });
+    if (path === 'rssInputForm.status' && value === FORM_STATUSES.PENDING) {
+      onFormPending({ feedbackElement, sendFormBtnElement, spinnerElement });
     }
 
-    if (path === 'rssInputForm.status' && value === STATUSES.PENDING) {
-      onPending({ feedbackElement, sendFormBtnElement, spinnerElement });
+    if (path === 'loadingState.error' && value) {
+      onError({ feedbackElement, value });
+    }
+
+    if (path === 'loadingState.status' && value === LOADING_STATUSES.PENDING) {
+      onLoadingPending({ feedbackElement, sendFormBtnElement, spinnerElement });
+    }
+
+    if (path === 'loadingState.status' && value === LOADING_STATUSES.LOADING) {
+      onLodaing({ feedbackElement, spinnerElement, urlInputElement });
+    }
+
+    if (path === 'loadingState.status' && value === LOADING_STATUSES.SUCCESS) {
+      onLoadingSuccess({ feedbackElement, spinnerElement, urlInputElement });
+    }
+
+    if (path === 'loadingState.status' && value === LOADING_STATUSES.FAILTURE) {
+      onLoadingFailture({ feedbackElement, spinnerElement, urlInputElement });
     }
   });
 
@@ -283,12 +219,11 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
 
   const runWatcher = () => {
     setTimeout(() => {
-      const requestPromises = state.rssUrls.map(
-        (url) => requestRss({
+      const requestPromises = state.feeds.map(
+        ({ url }) => requestRss({
           url,
           feedState: state.feeds,
           postState: state.posts,
-          rssUrlsState: state.rssUrls,
         }),
       );
       Promise.all(requestPromises).then(() => {
@@ -299,33 +234,49 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
 
   rssFormElement.addEventListener('submit', (event) => {
     event.preventDefault();
-    state.rssInputForm.status = STATUSES.LOADING;
+    state.rssInputForm.status = FORM_STATUSES.VALIDATING;
 
     const urlValidator = yup.string()
       .transform((value) => value.replace(/\/$/, ''))
       .url()
       .notOneOf(
-        state.rssUrls,
+        state.feeds.map(({ url }) => url),
         i18next.t('urlAlredyExist'),
       )
       .required();
 
     urlValidator.validate(urlInputElement.value)
-      .then((url) => requestRss({
-        url,
-        feedState: state.feeds,
-        postState: state.posts,
-        rssUrlsState: state.rssUrls,
-      }))
-      .then((url) => {
-        state.rssUrls.push(url);
-        state.rssInputForm.status = STATUSES.SUCCESS;
-      }).catch((error) => {
+      .catch((error) => {
         state.rssInputForm.error = error.message;
-        state.rssInputForm.status = STATUSES.FAILTURE;
+        state.rssInputForm.status = FORM_STATUSES.FAILTURE;
+      })
+      .then((url) => {
+        if (state.rssInputForm.status === FORM_STATUSES.FAILTURE) {
+          return null;
+        }
+
+        return requestRss({
+          url,
+          feedState: state.feeds,
+          postState: state.posts,
+        });
+      })
+      .catch((error) => {
+        state.rssInputForm.error = error.message;
+        state.rssInputForm.status = FORM_STATUSES.FAILTURE;
+      })
+      .then(() => {
+        if (state.rssInputForm.status === FORM_STATUSES.FAILTURE) {
+          return;
+        }
+        if (state.loadingState.status === LOADING_STATUSES.FAILTURE) {
+          return;
+        }
+        state.loadingState.status = LOADING_STATUSES.SUCCESS;
       })
       .finally(() => {
-        state.rssInputForm.status = STATUSES.PENDING;
+        state.rssInputForm.status = FORM_STATUSES.PENDING;
+        state.loadingState.status = LOADING_STATUSES.PENDING;
       });
   });
 
