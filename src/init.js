@@ -1,10 +1,9 @@
 import { Modal } from 'bootstrap';
 import * as yup from 'yup';
 import onChange from 'on-change';
-import i18next from 'i18next';
 import axios from 'axios';
 import rssParser from './parser.js';
-import { initLocalization } from './locales/index.js';
+import { i18instance } from './locales/index.js';
 import { getFormElements, getOutputElements } from './elements.js';
 import {
   onError,
@@ -42,19 +41,19 @@ const requestRss = (url) => {
         return parsedRss;
       } catch (error) {
         console.error(error);
-        throw new Error(i18next.t('notValid'));
+        throw new Error(i18instance.t('notValid'));
       }
     })
     .catch((error) => {
-      if (error.message === i18next.t('notValid')) {
+      if (error.message === i18instance.t('notValid')) {
         throw error;
       }
 
       if (error?.response?.status < 200 || error?.response?.status > 299) {
-        throw new Error(i18next.t('notValid'));
+        throw new Error(i18instance.t('notValid'));
       }
 
-      throw new Error(i18next.t('networkError'));
+      throw new Error(i18instance.t('networkError'));
     });
 };
 
@@ -187,8 +186,6 @@ const getState = ({
 };
 
 export default (rssFormElement, previewModalElement, outputElement, spinnerElement) => {
-  initLocalization();
-
   const {
     sendFormBtnElement,
     urlInputElement,
@@ -231,7 +228,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
       .url()
       .notOneOf(
         state.feeds.map(({ url }) => url),
-        i18next.t('urlAlredyExist'),
+        i18instance.t('urlAlredyExist'),
       )
       .required();
 

@@ -1,7 +1,7 @@
 {
   "name": "@hexlet/code",
   "version": "0.1.0",
-  "description": "",
+  "description": "Rss Reader is a service for aggregating RSS feeds, with which it is convenient to read various sources, such as blogs. It allows you to add an unlimited number of RSS feeds, updates them itself and adds new entries to the general feed.",
   "type": "module",
   "scripts": {
     "start": "webpack serve --mode development",
@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/hexlet-boilerplates/webpack-package.git"
   },
-  "author": "Kirill Mokevnin",
+  "author": "Yuriy Lvov",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/hexlet-boilerplates/webpack-package/issues"

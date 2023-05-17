@@ -1,10 +1,10 @@
 /* eslint testing-library/prefer-screen-queries: 0 */
 import { test, expect } from '@playwright/test';
-import i18next from 'i18next';
-import { initLocalization } from '../src/locales/index.js';
+import { config, i18instance, initLocalization } from '../src/locales/index.js';
 
-test.beforeAll(() => {
-  initLocalization();
+test.beforeAll(async () => {
+  await i18instance.init(config);
+  initLocalization(i18instance);
 });
 
 test.beforeEach(async ({ page }) => {
@@ -68,7 +68,7 @@ test('show error if url is not valid', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const errorMessage = page.getByText(i18next.t('urlNotValid'));
+  const errorMessage = page.getByText(i18instance.t('urlNotValid'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -81,7 +81,7 @@ test('show success message if url is valid', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const successMessage = page.getByText(i18next.t('rssAdded'));
+  const successMessage = page.getByText(i18instance.t('rssAdded'));
 
   await expect(successMessage).toBeVisible();
 });
@@ -114,7 +114,7 @@ test('show error message if url is already exists', async ({ page }) => {
   await sendFormBtn.click();
   await page.waitForTimeout(2000);
 
-  const errorMessage = page.getByText(i18next.t('urlAlredyExist'));
+  const errorMessage = page.getByText(i18instance.t('urlAlredyExist'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -127,7 +127,7 @@ test('should add rows after adding url', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const viewPostElement = page.getByText(i18next.t('viewPost'));
+  const viewPostElement = page.getByText(i18instance.t('viewPost'));
 
   await expect(viewPostElement.nth(0)).toBeVisible();
 });
@@ -140,7 +140,7 @@ test('show error message if input is empty', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const errorMessage = page.getByText(i18next.t('required'));
+  const errorMessage = page.getByText(i18instance.t('required'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -157,7 +157,7 @@ test('show error message if network error', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const errorMessage = page.getByText(i18next.t('networkError'));
+  const errorMessage = page.getByText(i18instance.t('networkError'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -178,7 +178,7 @@ test('show error message if bad response', async ({ page }) => {
 
   await sendFormBtn.click();
 
-  const errorMessage = page.getByText(i18next.t('notValid'));
+  const errorMessage = page.getByText(i18instance.t('notValid'));
 
   await expect(errorMessage).toBeVisible();
 });
@@ -191,7 +191,7 @@ test('show error message if response does not include rss', async ({ page }) => 
 
   await sendFormBtn.click();
 
-  const errorMessage = page.getByText(i18next.t('notValid'));
+  const errorMessage = page.getByText(i18instance.t('notValid'));
 
   await expect(errorMessage).toBeVisible();
 });

@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import { i18instance } from './locales/index.js';
 
 export const onFeedsChanged = ({ currentFeed, feedContainerElement, outputElement }) => {
   const feedContainer = document.createElement('div');
@@ -35,7 +35,7 @@ export const onPostAdded = ({
   });
 
   const subscriptionButton = document.createElement('button');
-  subscriptionButton.textContent = i18next.t('viewPost');
+  subscriptionButton.textContent = i18instance.t('viewPost');
   subscriptionButton.classList.add('btn', 'btn-primary');
 
   subscriptionButton.addEventListener('click', () => {
@@ -91,7 +91,7 @@ export const onLoadingPending = ({ feedbackElement, sendFormBtnElement, spinnerE
 };
 
 export const onLoadingSuccess = ({ feedbackElement, spinnerElement, urlInputElement }) => {
-  Object.assign(feedbackElement, { textContent: i18next.t('rssAdded') });
+  Object.assign(feedbackElement, { textContent: i18instance.t('rssAdded') });
   Object.assign(urlInputElement, { value: '' });
   spinnerElement.classList.add('d-none');
 
