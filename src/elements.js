@@ -1,10 +1,10 @@
 export const getFormElements = (formElement) => ({
-  sendFormBtnElement: formElement.querySelector('.js_send-form-btn'),
-  urlInputElement: formElement.querySelector('.js_url-input'),
-  feedbackElement: formElement.querySelector('.js_feedback'),
+  sendFormBtnElement: formElement.querySelector('[data-selector="send-form-btn"]'),
+  urlInputElement: formElement.querySelector('[data-selector="url-input"]'),
+  feedbackElement: formElement.querySelector('[data-selector="feedback"]'),
 });
 
 export const getOutputElements = (outputElement) => ({
-  postsElement: outputElement.querySelector('.js_posts'),
-  feedContainerElement: outputElement.querySelector('.js_feed'),
+  postsElement: outputElement.querySelector('[data-selector="posts"]'),
+  feedContainerElement: outputElement.querySelector('[data-selector="feeds"]'),
 });

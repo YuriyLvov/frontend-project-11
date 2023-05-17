@@ -5,7 +5,7 @@ const runApp = () => {
   const rssFormElement = document.getElementById('rss-form');
   const outputElement = document.getElementById('output');
   const previewModalElement = document.getElementById('preview-modal');
-  const spinnerElement = document.querySelector('.js_spinner');
+  const spinnerElement = document.querySelector('[data-selector="spinner"]');
 
   i18instance.init(config, (error) => {
     if (error) {

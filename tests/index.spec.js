@@ -35,8 +35,8 @@ test('has no feeds title by default', async ({ page }) => {
 });
 
 test('posts title appears after first url added', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -48,8 +48,8 @@ test('posts title appears after first url added', async ({ page }) => {
 });
 
 test('feeds title appears after first url added', async ({ page }) => {
-  const inputUrl = page.locator('.js_url-input');
-  const sendFormBtn = page.locator('.js_send-form-btn');
+  const inputUrl = page.locator('[data-selector="url-input"]');
+  const sendFormBtn = page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -61,8 +61,8 @@ test('feeds title appears after first url added', async ({ page }) => {
 });
 
 test('show error if url is not valid', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('not-valid-url');
 
@@ -74,8 +74,8 @@ test('show error if url is not valid', async ({ page }) => {
 });
 
 test('show success message if url is valid', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -87,8 +87,8 @@ test('show success message if url is valid', async ({ page }) => {
 });
 
 test('clean input after adding url', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -101,8 +101,8 @@ test('clean input after adding url', async ({ page }) => {
 });
 
 test('show error message if url is already exists', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -120,8 +120,8 @@ test('show error message if url is already exists', async ({ page }) => {
 });
 
 test('should add rows after adding url', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -133,8 +133,8 @@ test('should add rows after adding url', async ({ page }) => {
 });
 
 test('show error message if input is empty', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('');
 
@@ -150,8 +150,8 @@ test('show error message if network error', async ({ page }) => {
     route.abort();
   });
 
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -171,8 +171,8 @@ test('show error message if bad response', async ({ page }) => {
     });
   });
 
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://ru.hexlet.io/lessons.rss');
 
@@ -184,8 +184,8 @@ test('show error message if bad response', async ({ page }) => {
 });
 
 test('show error message if response does not include rss', async ({ page }) => {
-  const inputUrl = await page.locator('.js_url-input');
-  const sendFormBtn = await page.locator('.js_send-form-btn');
+  const inputUrl = await page.locator('[data-selector="url-input"]');
+  const sendFormBtn = await page.locator('[data-selector="send-form-btn"]');
 
   inputUrl.fill('https://google.com');
 

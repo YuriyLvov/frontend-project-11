@@ -15,18 +15,18 @@
       <form id="rss-form">
         <div class="mb-3">
           <label for="url-input" class="form-label">Ссылка RSS</label>
-          <input id="url-input" autofocus name="url" aria-label="url" class="form-control w-75 js_url-input"
-            placeholder="ссылка RSS" autocomplete="off" type="text">
+          <input id="url-input" autofocus name="url" aria-label="url" class="form-control w-75"
+            placeholder="ссылка RSS" autocomplete="off" type="text" data-selector="url-input">
         </div>
-        <button class="btn btn-primary js_send-form-btn" type="submit">Добавить</button>
+        <button class="btn btn-primary" data-selector="send-form-btn" type="submit">Добавить</button>
         
         <p class="small">Пример: https://ru.hexlet.io/lessons.rss</p>
-        <p class="feedback small js_feedback"></p>
+        <p class="feedback small" data-selector="feedback"></p>
       </form>
     </div>
   </div>
 
-  <div class="d-flex d-none justify-content-center js_spinner">
+  <div class="d-flex d-none justify-content-center" data-selector="spinner">
     <div class="col-12 spinner-border" role="status">
       <span class="sr-only"></span>
     </div>
@@ -36,11 +36,11 @@
     <div class="row">
       <div class="col-8">
         <h2>Посты</h2>
-        <div class="container js_posts"></div>
+        <div class="container" data-selector="posts"></div>
       </div>
       <div class="col-4">
         <h2>Фиды</h2>
-        <div class="container js_feed"></div>
+        <div class="container" data-selector="feeds"></div>
       </div>
     </div>
   </div>
@@ -49,14 +49,14 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" data-js-selector="preview-modal-title">Modal title</h5>
+          <h5 class="modal-title" data-selector="preview-modal-title">Modal title</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body" data-js-selector="preview-modal-description">
+        <div class="modal-body" data-selector="preview-modal-description">
           <p>Modal body text goes here.</p>
         </div>
         <div class="modal-footer">
-          <a class="btn btn-primary" data-js-selector="preview-modal-read-completely" role="button" href="#">Читать полностью</a>
+          <a class="btn btn-primary" data-selector="preview-modal-read-completely" role="button" href="#">Читать полностью</a>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
         </div>
       </div>

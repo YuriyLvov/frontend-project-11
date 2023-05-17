@@ -69,9 +69,9 @@ const updatePosts = (posts, postState) => posts.forEach((post) => {
 
 const createPreviewModal = (previewModalElement) => {
   const modal = new Modal(previewModalElement);
-  const previewModalTitleElement = previewModalElement.querySelector('[data-js-selector="preview-modal-title"]');
-  const previewModalDescriptionElement = previewModalElement.querySelector('[data-js-selector="preview-modal-description"]');
-  const previewModalReadAllElement = previewModalElement.querySelector('[data-js-selector="preview-modal-read-completely"]');
+  const previewModalTitleElement = previewModalElement.querySelector('[data-selector="preview-modal-title"]');
+  const previewModalDescriptionElement = previewModalElement.querySelector('[data-selector="preview-modal-description"]');
+  const previewModalReadAllElement = previewModalElement.querySelector('[data-selector="preview-modal-read-completely"]');
 
   const openModal = (title, description, link) => {
     previewModalTitleElement.textContent = title;
