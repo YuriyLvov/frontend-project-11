@@ -36,7 +36,7 @@ const requestRss = (url) => {
   return axios.get(proxyUrl)
     .then((response) => {
       try {
-        const parsedRss = rssParser(response.data.contents, url);
+        const parsedRss = rssParser(response.data.contents);
 
         return parsedRss;
       } catch (error) {
@@ -248,7 +248,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
         if (!parsedRss) {
           return;
         }
-        state.feeds.push(parsedRss.feed);
+        state.feeds.push({ ...parsedRss.feed, url: urlInputElement.value });
         updatePosts(parsedRss.items, state.posts);
       })
       .catch((error) => {

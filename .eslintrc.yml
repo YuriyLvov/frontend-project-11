@@ -4,6 +4,7 @@ root: true
 plugins:
   - jest
   - babel
+  - testing-library
 
 env:
   node: true

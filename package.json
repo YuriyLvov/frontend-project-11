@@ -6,7 +6,6 @@
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "webpack build",
-    "test": "jest --colors",
     "test-e2e": "npx playwright test"
   },
   "repository": {
@@ -42,6 +41,7 @@
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-import": "^2.27.4",
     "eslint-plugin-jest": "^27.2.1",
+    "eslint-plugin-testing-library": "^5.11.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^29.3.1",
