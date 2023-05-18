@@ -232,41 +232,29 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
       )
       .required();
 
-    urlValidator.validate(urlInputElement.value)
+    const valudationResult = urlValidator.validate(urlInputElement.value)
+      .then((url) => url)
       .catch((error) => {
         state.rssInputForm.error = error.message;
         state.rssInputForm.status = FORM_STATUSES.FAILTURE;
-      })
-      .then((url) => {
-        if (state.rssInputForm.status === FORM_STATUSES.FAILTURE) {
-          return null;
-        }
 
-        return requestRss(url);
-      })
+        throw error;
+      });
+
+    valudationResult
+      .then((url) => requestRss(url))
       .then((parsedRss) => {
-        if (!parsedRss) {
-          return;
-        }
         state.feeds.push({ ...parsedRss.feed, url: urlInputElement.value });
         updatePosts(parsedRss.items, state.posts);
+
+        state.loadingState.status = LOADING_STATUSES.SUCCESS;
       })
       .catch((error) => {
-        state.rssInputForm.error = error.message;
-        state.rssInputForm.status = FORM_STATUSES.FAILTURE;
-      })
-      .then(() => {
-        if (state.rssInputForm.status === FORM_STATUSES.FAILTURE) {
-          return;
-        }
-        if (state.loadingState.status === LOADING_STATUSES.FAILTURE) {
-          return;
-        }
-        state.loadingState.status = LOADING_STATUSES.SUCCESS;
+        state.loadingState.error = error.message;
+        state.loadingState.status = LOADING_STATUSES.FAILTURE;
       })
       .finally(() => {
         state.rssInputForm.status = FORM_STATUSES.PENDING;
-        state.loadingState.status = LOADING_STATUSES.PENDING;
       });
   });
 
