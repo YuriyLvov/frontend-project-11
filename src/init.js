@@ -233,7 +233,6 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
       .required();
 
     const valudationResult = urlValidator.validate(urlInputElement.value)
-      .then((url) => url)
       .catch((error) => {
         state.rssInputForm.error = error.message;
         state.rssInputForm.status = FORM_STATUSES.FAILTURE;
@@ -242,7 +241,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
       });
 
     valudationResult
-      .then((url) => requestRss(url))
+      .then(requestRss)
       .then((parsedRss) => {
         state.feeds.push({ ...parsedRss.feed, url: urlInputElement.value });
         updatePosts(parsedRss.items, state.posts);
@@ -250,6 +249,10 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
         state.loadingState.status = LOADING_STATUSES.SUCCESS;
       })
       .catch((error) => {
+        if (error instanceof yup.ValidationError) {
+          return;
+        }
+
         state.loadingState.error = error.message;
         state.loadingState.status = LOADING_STATUSES.FAILTURE;
       })
