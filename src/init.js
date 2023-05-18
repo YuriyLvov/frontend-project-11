@@ -232,7 +232,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
       )
       .required();
 
-    const valudationResult = urlValidator.validate(urlInputElement.value)
+    const validationResult = urlValidator.validate(urlInputElement.value)
       .catch((error) => {
         state.rssInputForm.error = error.message;
         state.rssInputForm.status = FORM_STATUSES.FAILTURE;
@@ -240,7 +240,7 @@ export default (rssFormElement, previewModalElement, outputElement, spinnerEleme
         throw error;
       });
 
-    valudationResult
+    validationResult
       .then(requestRss)
       .then((parsedRss) => {
         state.feeds.push({ ...parsedRss.feed, url: urlInputElement.value });
